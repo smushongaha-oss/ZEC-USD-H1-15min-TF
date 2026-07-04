@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ZECUSDT H1 / M15 Live Dual-Timeframe Dashboard</title>
+<title>BTCUSDT H1 / M15 Live Dual-Timeframe Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -169,11 +169,11 @@
   <header class="header">
     <div class="header-left">
       <div class="logo">
-        <div class="logo-icon">ZEC</div>
-        <div class="logo-text"><span>ZEC</span>/USDT EA</div>
+        <div class="logo-icon">BTC</div>
+        <div class="logo-text"><span>BTC</span>/USDT EA</div>
       </div>
       <div class="pair-info">
-        <span class="pair-name">ZECUSDT</span>
+        <span class="pair-name">BTCUSDT</span>
         <span class="pair-tag">Linear Perp</span>
         <span class="pair-price" id="currentPrice">...</span>
         <span class="pair-change up" id="priceChange">0.00%</span>
@@ -279,9 +279,9 @@
     <div class="footer-panel">
       <div class="footer-title">EA Settings</div>
       <div class="settings-grid">
-        <div class="setting-group"><span class="setting-label">Lot</span><input class="setting-input" type="number" id="lotSize" value="0.1" step="0.01" min="0.01"></div>
-        <div class="setting-group"><span class="setting-label">SL</span><input class="setting-input" type="number" id="stopLoss" value="5" step="0.5" min="0"></div>
-        <div class="setting-group"><span class="setting-label">TP</span><input class="setting-input" type="number" id="takeProfit" value="10" step="0.5" min="0"></div>
+        <div class="setting-group"><span class="setting-label">Lot</span><input class="setting-input" type="number" id="lotSize" value="0.01" step="0.001" min="0.001"></div>
+        <div class="setting-group"><span class="setting-label">SL</span><input class="setting-input" type="number" id="stopLoss" value="300" step="10" min="0"></div>
+        <div class="setting-group"><span class="setting-label">TP</span><input class="setting-input" type="number" id="takeProfit" value="600" step="10" min="0"></div>
         <div class="setting-group"><span class="setting-label">Max Trades</span><input class="setting-input" type="number" id="maxTrades" value="3" step="1" min="1" max="10"></div>
         <div class="setting-group"><span class="setting-label">MA Fast</span><input class="setting-input" type="number" id="maFast" value="20" step="1" min="5" max="50"></div>
         <div class="setting-group"><span class="setting-label">MA Slow</span><input class="setting-input" type="number" id="maSlow" value="50" step="1" min="20" max="200"></div>
@@ -298,10 +298,10 @@
 
 <script>
 // ============================================================
-// ZECUSDT DUAL-TIMEFRAME (H1 + M15) DASHBOARD — BYBIT LINEAR
+// BTCUSDT DUAL-TIMEFRAME (H1 + M15) DASHBOARD — BYBIT LINEAR
 // ============================================================
 
-const SYMBOL = 'ZECUSDT';
+const SYMBOL = 'BTCUSDT';
 const LIMIT = 200;
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 const VISIBLE_CANDLES = 70;
@@ -323,7 +323,7 @@ const TICKER_ENDPOINTS = [
 const shared = {
   eaActive:true, currentPrice:0, prevPrice:0, high24h:0, low24h:Infinity, vol24h:0, priceChange24h:0,
   pricePrecision:2, trades:[],
-  settings:{lotSize:0.1,stopLoss:5,takeProfit:10,maxTrades:3,maFast:20,maSlow:50},
+  settings:{lotSize:0.01,stopLoss:300,takeProfit:600,maxTrades:3,maFast:20,maSlow:50},
   ws:null, wsConnected:false, pingTimer:null, reconnectTimer:null, reconnectAttempts:0, reconnectDelay:2000, MAX_RECONNECT:10,
   autoRefreshTimer:null, countdownTimer:null, secondsLeft:AUTO_REFRESH_MS/1000, isSandboxed:false,
   lastConfluence:'NEUTRAL'
@@ -485,7 +485,7 @@ function computeIndicators(tf){
   tf.lastClass=cls;
 
   document.getElementById(`rsiValue_${tf.key}`).textContent = rsiV!=null?rsiV.toFixed(1):'--';
-  document.getElementById(`macdValue_${tf.key}`).textContent = histV!=null?histV.toFixed(4):'--';
+  document.getElementById(`macdValue_${tf.key}`).textContent = histV!=null?histV.toFixed(2):'--';
   document.getElementById(`stochValue_${tf.key}`).textContent = kV!=null?kV.toFixed(1):'--';
 
   updateConfluence();
@@ -961,9 +961,9 @@ document.getElementById('connBadge').addEventListener('click',()=>{
 });
 
 document.getElementById('applySettings').addEventListener('click',()=>{
-  shared.settings.lotSize=parseFloat(document.getElementById('lotSize').value)||0.1;
-  shared.settings.stopLoss=parseFloat(document.getElementById('stopLoss').value)||5;
-  shared.settings.takeProfit=parseFloat(document.getElementById('takeProfit').value)||10;
+  shared.settings.lotSize=parseFloat(document.getElementById('lotSize').value)||0.01;
+  shared.settings.stopLoss=parseFloat(document.getElementById('stopLoss').value)||300;
+  shared.settings.takeProfit=parseFloat(document.getElementById('takeProfit').value)||600;
   shared.settings.maxTrades=parseInt(document.getElementById('maxTrades').value)||3;
   shared.settings.maFast=parseInt(document.getElementById('maFast').value)||20;
   shared.settings.maSlow=parseInt(document.getElementById('maSlow').value)||50;
