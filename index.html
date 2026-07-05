@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BTCUSDT H1 / M15 / M5 Live Multi-Timeframe Dashboard</title>
+<title>BTCUSDT H4 / H1 / M15 Live Multi-Timeframe Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -26,8 +26,8 @@
     --accent-orange: #ff8c42;
     --accent-purple: #a78bfa;
     --accent-purple-dim: rgba(167,139,250,0.15);
-    --accent-pink: #ff6ec7;
-    --accent-pink-dim: rgba(255,110,199,0.12);
+    --accent-lime: #a3e635;
+    --accent-lime-dim: rgba(163,230,53,0.12);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { height:100vh; overflow:hidden; }
@@ -87,9 +87,9 @@
   .main-dual { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); flex:1; min-height:0; }
   .panel { display:flex; flex-direction:column; background:var(--bg-primary); min-height:0; }
   .panel-toolbar { display:flex; align-items:center; justify-content:space-between; padding:3px 8px; border-bottom:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0; height:26px; }
-  .tf-badge { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:2px 8px; border-radius:3px; background:var(--accent-gold-dim); color:var(--accent-gold); border:1px solid rgba(255,193,7,0.3); }
+  .tf-badge { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:2px 8px; border-radius:3px; background:var(--accent-lime-dim); color:var(--accent-lime); border:1px solid rgba(163,230,53,0.3); }
+  .tf-badge.h1 { background:var(--accent-gold-dim); color:var(--accent-gold); border-color:rgba(255,193,7,0.3); }
   .tf-badge.m15 { background:var(--accent-cyan-dim); color:var(--accent-cyan); border-color:rgba(0,212,255,0.3); }
-  .tf-badge.m5 { background:var(--accent-pink-dim); color:var(--accent-pink); border-color:rgba(255,110,199,0.3); }
   .toolbar-group { display:flex; align-items:center; gap:2px; }
   .indicator-toggle { padding:2px 5px; font-size:7px; font-weight:500; border:1px solid var(--border); border-radius:3px; background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:2px; transition:all 0.2s; }
   .indicator-toggle.on { border-color:var(--accent-cyan); color:var(--accent-cyan); background:var(--accent-cyan-dim); }
@@ -191,7 +191,7 @@
       <div class="header-stat"><div class="header-stat-label">24h Vol</div><div class="header-stat-value" id="vol24h">...</div></div>
       <div class="refresh-bar-wrap">
         <div class="refresh-bar-track"><div class="refresh-bar-fill" id="refresh-bar"></div></div>
-        <span class="refresh-countdown" id="refresh-countdown">1:00</span>
+        <span class="refresh-countdown" id="refresh-countdown">5:00</span>
       </div>
       <button class="ea-status active" id="eaToggle" aria-label="Toggle EA">
         <span class="ea-dot"></span><span id="eaLabel">EA Active</span>
@@ -207,16 +207,49 @@
   <div class="confluence-strip">
     <span class="confluence-label">Confluence</span>
     <span class="confluence-badge neutral" id="confluenceBadge">NEUTRAL</span>
+    <span class="confluence-tf">H4: <b id="h4ClassTag">--</b></span>
     <span class="confluence-tf">H1: <b id="h1ClassTag">--</b></span>
     <span class="confluence-tf">M15: <b id="m15ClassTag">--</b></span>
-    <span class="confluence-tf">M5: <b id="m5ClassTag">--</b></span>
   </div>
 
   <div class="main-dual">
+    <!-- H4 PANEL -->
+    <section class="panel" id="panel-h4">
+      <div class="panel-toolbar">
+        <span class="tf-badge">H4</span>
+        <div class="toolbar-group">
+          <button class="indicator-toggle on" data-tf="h4" data-ind="ma"><span class="dot"></span>MA</button>
+          <button class="indicator-toggle on" data-tf="h4" data-ind="bb"><span class="dot"></span>BB</button>
+          <button class="indicator-toggle on" data-tf="h4" data-ind="vol"><span class="dot"></span>VOL</button>
+          <button class="indicator-toggle" data-tf="h4" data-ind="signals"><span class="dot"></span>Sig</button>
+        </div>
+      </div>
+      <div class="panel-chart-container"><canvas id="mainChart_h4"></canvas></div>
+      <div class="panel-sub-indicators">
+        <div class="sub-indicator"><span class="sub-label">RSI</span><span class="sub-value" id="rsiValue_h4" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_h4"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">MACD</span><span class="sub-value" id="macdValue_h4" style="color:var(--accent-gold)">--</span><canvas id="macdChart_h4"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">STOCH</span><span class="sub-value" id="stochValue_h4" style="color:var(--accent-orange)">--</span><canvas id="stochChart_h4"></canvas></div>
+      </div>
+      <div class="panel-bottom">
+        <div class="panel-gauge-col">
+          <canvas class="gauge-canvas" id="gaugeCanvas_h4" width="200" height="110"></canvas>
+          <div class="gauge-signal-text" id="gaugeText_h4">LOADING</div>
+          <div class="gauge-label">H4 Strength</div>
+          <div class="chip-row">
+            <span class="chip neutral" id="chipRsi_h4">RSI</span>
+            <span class="chip neutral" id="chipMacd_h4">MACD</span>
+            <span class="chip neutral" id="chipStoch_h4">STOCH</span>
+            <span class="chip neutral" id="chipTrend_h4">TREND</span>
+          </div>
+        </div>
+        <div class="panel-signals" id="signalList_h4"><div class="empty-msg">Fetching H4 data...</div></div>
+      </div>
+    </section>
+
     <!-- H1 PANEL -->
     <section class="panel" id="panel-h1">
       <div class="panel-toolbar">
-        <span class="tf-badge">H1</span>
+        <span class="tf-badge h1">H1</span>
         <div class="toolbar-group">
           <button class="indicator-toggle on" data-tf="h1" data-ind="ma"><span class="dot"></span>MA</button>
           <button class="indicator-toggle on" data-tf="h1" data-ind="bb"><span class="dot"></span>BB</button>
@@ -278,39 +311,6 @@
         <div class="panel-signals" id="signalList_m15"><div class="empty-msg">Fetching M15 data...</div></div>
       </div>
     </section>
-
-    <!-- M5 PANEL -->
-    <section class="panel" id="panel-m5">
-      <div class="panel-toolbar">
-        <span class="tf-badge m5">M5</span>
-        <div class="toolbar-group">
-          <button class="indicator-toggle on" data-tf="m5" data-ind="ma"><span class="dot"></span>MA</button>
-          <button class="indicator-toggle on" data-tf="m5" data-ind="bb"><span class="dot"></span>BB</button>
-          <button class="indicator-toggle on" data-tf="m5" data-ind="vol"><span class="dot"></span>VOL</button>
-          <button class="indicator-toggle" data-tf="m5" data-ind="signals"><span class="dot"></span>Sig</button>
-        </div>
-      </div>
-      <div class="panel-chart-container"><canvas id="mainChart_m5"></canvas></div>
-      <div class="panel-sub-indicators">
-        <div class="sub-indicator"><span class="sub-label">RSI</span><span class="sub-value" id="rsiValue_m5" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_m5"></canvas></div>
-        <div class="sub-indicator"><span class="sub-label">MACD</span><span class="sub-value" id="macdValue_m5" style="color:var(--accent-gold)">--</span><canvas id="macdChart_m5"></canvas></div>
-        <div class="sub-indicator"><span class="sub-label">STOCH</span><span class="sub-value" id="stochValue_m5" style="color:var(--accent-orange)">--</span><canvas id="stochChart_m5"></canvas></div>
-      </div>
-      <div class="panel-bottom">
-        <div class="panel-gauge-col">
-          <canvas class="gauge-canvas" id="gaugeCanvas_m5" width="200" height="110"></canvas>
-          <div class="gauge-signal-text" id="gaugeText_m5">LOADING</div>
-          <div class="gauge-label">M5 Strength</div>
-          <div class="chip-row">
-            <span class="chip neutral" id="chipRsi_m5">RSI</span>
-            <span class="chip neutral" id="chipMacd_m5">MACD</span>
-            <span class="chip neutral" id="chipStoch_m5">STOCH</span>
-            <span class="chip neutral" id="chipTrend_m5">TREND</span>
-          </div>
-        </div>
-        <div class="panel-signals" id="signalList_m5"><div class="empty-msg">Fetching M5 data...</div></div>
-      </div>
-    </section>
   </div>
 
   <div class="footer-bar">
@@ -327,7 +327,7 @@
       <button class="btn-apply" id="applySettings" style="margin-top:6px;">Apply</button>
     </div>
     <div class="footer-panel">
-      <div class="footer-title">EA Trades (Confluence-Triggered · H1+M15+M5)</div>
+      <div class="footer-title">EA Trades (Confluence-Triggered · H4+H1+M15)</div>
       <div id="tradeLog"><div class="empty-msg">No EA trades yet — waiting for timeframe agreement</div></div>
     </div>
   </div>
@@ -336,12 +336,12 @@
 
 <script>
 // ============================================================
-// BTCUSDT MULTI-TIMEFRAME (H1 + M15 + M5) DASHBOARD — BYBIT LINEAR
+// BTCUSDT MULTI-TIMEFRAME (H4 + H1 + M15) DASHBOARD — BYBIT LINEAR
 // ============================================================
 
 const SYMBOL = 'BTCUSDT';
 const LIMIT = 200;
-const AUTO_REFRESH_MS = 60 * 1000; // 60s — short enough to matter once M5 is in the mix
+const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5min — fastest TF here is M15
 const VISIBLE_CANDLES = 70;
 const WS_URL = 'wss://stream.bybit.com/v5/public/linear';
 
@@ -387,10 +387,10 @@ function makeTF(key,interval,label){
     }); }
   };
 }
+const tfH4 = makeTF('h4','240','H4');
 const tfH1 = makeTF('h1','60','H1');
 const tfM15 = makeTF('m15','15','M15');
-const tfM5 = makeTF('m5','5','M5');
-const TFS = [tfH1, tfM15, tfM5];
+const TFS = [tfH4, tfH1, tfM15];
 
 // ── Utility ─────────────────────────────────────────────────
 function fmt(v,p){ if(v==null||isNaN(v)) return '--'; return Number(v).toFixed(p!=null?p:shared.pricePrecision); }
@@ -567,13 +567,13 @@ function renderSignals(tf){
     </div>`).join('');
 }
 
-// ── Confluence + EA trade logic (now 3 timeframes: H1, M15, M5) ────────────
+// ── Confluence + EA trade logic (now 3 timeframes: H4, H1, M15) ────────────
 function classBucket(cls){ if(cls.includes('BUY')) return 'buy'; if(cls.includes('SELL')) return 'sell'; return 'neutral'; }
 
 function updateConfluence(){
+  document.getElementById('h4ClassTag').textContent = tfH4.lastClass;
   document.getElementById('h1ClassTag').textContent = tfH1.lastClass;
   document.getElementById('m15ClassTag').textContent = tfM15.lastClass;
-  document.getElementById('m5ClassTag').textContent = tfM5.lastClass;
 
   const buckets = TFS.map(tf=>classBucket(tf.lastClass));
   const buyCount = buckets.filter(b=>b==='buy').length;
@@ -601,9 +601,9 @@ function updateConfluence(){
 function openConfluenceTrade(conf,dir){
   const openTrades=shared.trades.filter(t=>t.status==='open');
   if(openTrades.length>=shared.settings.maxTrades) return;
-  const price=shared.currentPrice || tfH1.candles.at(-1)?.c;
+  const price=shared.currentPrice || tfH4.candles.at(-1)?.c;
   if(!price) return;
-  const atrVal = (tfH1.indValues && tfH1.indValues.atr[tfH1.candles.length-1]) || price*0.01;
+  const atrVal = (tfH4.indValues && tfH4.indValues.atr[tfH4.candles.length-1]) || price*0.01;
   const isBuy = dir==='buy';
   const sl = isBuy ? price-Math.max(shared.settings.stopLoss,atrVal*1.2) : price+Math.max(shared.settings.stopLoss,atrVal*1.2);
   const tp = isBuy ? price+Math.max(shared.settings.takeProfit,atrVal*2.4) : price-Math.max(shared.settings.takeProfit,atrVal*2.4);
@@ -883,7 +883,7 @@ function handleFetchFailure(){
 function hideSandboxWarning(){ document.getElementById('sandbox-warning').style.display='none'; }
 
 async function loadInitialData(){
-  const results = await Promise.all([fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchKlinesFor(tfM5), fetchTicker()]);
+  const results = await Promise.all([fetchKlinesFor(tfH4), fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchTicker()]);
   if(!results[0] && !results[1] && !results[2]){ handleFetchFailure(); return; }
   hideSandboxWarning();
   TFS.forEach(tf=>{
@@ -908,7 +908,7 @@ function startAutoRefresh(){
   shared.secondsLeft=AUTO_REFRESH_MS/1000;updateCountdownUI();
   shared.countdownTimer=setInterval(()=>{shared.secondsLeft--;if(shared.secondsLeft<0)shared.secondsLeft=0;updateCountdownUI()},1000);
   shared.autoRefreshTimer=setInterval(async ()=>{
-    await Promise.all([fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchKlinesFor(tfM5), fetchTicker()]);
+    await Promise.all([fetchKlinesFor(tfH4), fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchTicker()]);
     TFS.forEach(tf=>{ computeIndicators(tf); drawAllCharts(tf); });
     updateHeader(); renderTrades();
     shared.secondsLeft=AUTO_REFRESH_MS/1000;
@@ -927,7 +927,7 @@ function connectWebSocket(){
     shared.wsConnected=true; shared.reconnectAttempts=0; shared.reconnectDelay=2000;
     document.getElementById('connBadge').textContent='Connected';
     document.getElementById('connBadge').className='conn-badge connected';
-    shared.ws.send(JSON.stringify({op:'subscribe',args:[`kline.60.${SYMBOL}`,`kline.15.${SYMBOL}`,`kline.5.${SYMBOL}`,`tickers.${SYMBOL}`]}));
+    shared.ws.send(JSON.stringify({op:'subscribe',args:[`kline.240.${SYMBOL}`,`kline.60.${SYMBOL}`,`kline.15.${SYMBOL}`,`tickers.${SYMBOL}`]}));
     clearInterval(shared.pingTimer);
     shared.pingTimer=setInterval(()=>{ if(shared.ws&&shared.ws.readyState===1) shared.ws.send(JSON.stringify({op:'ping'})); },20000);
   };
@@ -935,9 +935,9 @@ function connectWebSocket(){
   shared.ws.onmessage=(ev)=>{
     let msg; try{ msg=JSON.parse(ev.data); }catch(e){ return; }
     if(!msg.topic) return;
-    if(msg.topic.startsWith('kline.60.')) handleKlineMsg(tfH1,msg);
+    if(msg.topic.startsWith('kline.240.')) handleKlineMsg(tfH4,msg);
+    else if(msg.topic.startsWith('kline.60.')) handleKlineMsg(tfH1,msg);
     else if(msg.topic.startsWith('kline.15.')) handleKlineMsg(tfM15,msg);
-    else if(msg.topic.startsWith('kline.5.')) handleKlineMsg(tfM5,msg);
     else if(msg.topic.startsWith('tickers.')) handleTickerMsg(msg);
   };
 
@@ -987,7 +987,7 @@ function handleTickerMsg(msg){
 document.querySelectorAll('.indicator-toggle').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const key=btn.dataset.tf, ind=btn.dataset.ind;
-    const tf = key==='h1'?tfH1:(key==='m15'?tfM15:tfM5);
+    const tf = key==='h4'?tfH4:(key==='h1'?tfH1:tfM15);
     const map={ma:'showMA',bb:'showBB',vol:'showVol',signals:'showSignals'};
     tf.indicators[map[ind]]=!tf.indicators[map[ind]];
     btn.classList.toggle('on',tf.indicators[map[ind]]);
