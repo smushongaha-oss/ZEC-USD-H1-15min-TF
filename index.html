@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BTCUSDT H1 / M15 Live Dual-Timeframe Dashboard</title>
+<title>BTCUSDT H1 / M15 / M5 Live Multi-Timeframe Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -26,6 +26,8 @@
     --accent-orange: #ff8c42;
     --accent-purple: #a78bfa;
     --accent-purple-dim: rgba(167,139,250,0.15);
+    --accent-pink: #ff6ec7;
+    --accent-pink-dim: rgba(255,110,199,0.12);
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   html, body { height:100vh; overflow:hidden; }
@@ -33,7 +35,7 @@
   .app { display:flex; flex-direction:column; height:100vh; }
 
   /* ── Header ───────────────────────────────────────────── */
-  .header { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; border-bottom:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0; height:42px; }
+  .header { display:flex; align-items:center; justify-content:space-between; padding:6px 16px; border-bottom:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0; height:42px; flex-wrap:wrap; }
   .header-left { display:flex; align-items:center; gap:10px; }
   .logo { display:flex; align-items:center; gap:5px; }
   .logo-icon { width:26px; height:26px; background:linear-gradient(135deg,var(--accent-gold),var(--accent-orange)); border-radius:5px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:9px; color:#000; font-family:'JetBrains Mono',monospace; }
@@ -71,7 +73,7 @@
   @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
   /* ── Confluence strip ─────────────────────────────────── */
-  .confluence-strip { display:flex; align-items:center; justify-content:center; gap:10px; padding:5px 12px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); flex-shrink:0; height:26px; }
+  .confluence-strip { display:flex; align-items:center; justify-content:center; gap:10px; padding:5px 12px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); flex-shrink:0; height:26px; flex-wrap:wrap; }
   .confluence-label { font-size:9px; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); }
   .confluence-badge { font-size:11px; font-weight:700; padding:2px 10px; border-radius:3px; letter-spacing:0.5px; }
   .confluence-badge.buy { background:var(--accent-green-dim); color:var(--accent-green); }
@@ -81,14 +83,15 @@
   .confluence-tf { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-secondary); }
   .confluence-tf b { color:var(--text-primary); }
 
-  /* ── Dual panel layout ────────────────────────────────── */
-  .main-dual { display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--border); flex:1; min-height:0; }
+  /* ── Triple panel layout ──────────────────────────────── */
+  .main-dual { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); flex:1; min-height:0; }
   .panel { display:flex; flex-direction:column; background:var(--bg-primary); min-height:0; }
-  .panel-toolbar { display:flex; align-items:center; justify-content:space-between; padding:3px 10px; border-bottom:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0; height:26px; }
+  .panel-toolbar { display:flex; align-items:center; justify-content:space-between; padding:3px 8px; border-bottom:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0; height:26px; }
   .tf-badge { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:2px 8px; border-radius:3px; background:var(--accent-gold-dim); color:var(--accent-gold); border:1px solid rgba(255,193,7,0.3); }
   .tf-badge.m15 { background:var(--accent-cyan-dim); color:var(--accent-cyan); border-color:rgba(0,212,255,0.3); }
-  .toolbar-group { display:flex; align-items:center; gap:3px; }
-  .indicator-toggle { padding:2px 6px; font-size:8px; font-weight:500; border:1px solid var(--border); border-radius:3px; background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:3px; transition:all 0.2s; }
+  .tf-badge.m5 { background:var(--accent-pink-dim); color:var(--accent-pink); border-color:rgba(255,110,199,0.3); }
+  .toolbar-group { display:flex; align-items:center; gap:2px; }
+  .indicator-toggle { padding:2px 5px; font-size:7px; font-weight:500; border:1px solid var(--border); border-radius:3px; background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:2px; transition:all 0.2s; }
   .indicator-toggle.on { border-color:var(--accent-cyan); color:var(--accent-cyan); background:var(--accent-cyan-dim); }
   .indicator-toggle .dot { width:4px; height:4px; border-radius:50%; background:currentColor; }
   .panel-chart-container { flex:1; min-height:0; position:relative; }
@@ -100,10 +103,10 @@
   .sub-label { position:absolute; top:2px; left:4px; font-size:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-muted); z-index:2; }
   .sub-value { position:absolute; top:2px; right:4px; font-family:'JetBrains Mono',monospace; font-size:7px; font-weight:500; z-index:2; }
 
-  .panel-bottom { display:flex; gap:6px; padding:6px; border-top:1px solid var(--border); background:var(--bg-secondary); height:140px; flex-shrink:0; }
-  .panel-gauge-col { width:100px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; }
-  .gauge-canvas { width:96px; height:52px; }
-  .gauge-signal-text { font-size:11px; font-weight:700; margin-top:1px; text-align:center; }
+  .panel-bottom { display:flex; gap:5px; padding:5px; border-top:1px solid var(--border); background:var(--bg-secondary); height:140px; flex-shrink:0; }
+  .panel-gauge-col { width:88px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; }
+  .gauge-canvas { width:84px; height:48px; }
+  .gauge-signal-text { font-size:10px; font-weight:700; margin-top:1px; text-align:center; }
   .gauge-label { font-size:6px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; }
   .chip-row { display:flex; flex-wrap:wrap; gap:2px; justify-content:center; margin-top:4px; }
   .chip { font-size:6px; font-weight:700; padding:1px 3px; border-radius:2px; text-transform:uppercase; }
@@ -114,17 +117,17 @@
   .panel-signals { flex:1; min-width:0; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
   .panel-signals::-webkit-scrollbar { width:3px; }
   .panel-signals::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-  .signal-card { padding:5px; border-radius:4px; border:1px solid var(--border); margin-bottom:3px; background:var(--bg-card); }
+  .signal-card { padding:4px; border-radius:4px; border:1px solid var(--border); margin-bottom:3px; background:var(--bg-card); }
   .signal-card.buy { border-left:3px solid var(--accent-green); }
   .signal-card.sell { border-left:3px solid var(--accent-red); }
   .signal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:2px; }
-  .signal-type { font-size:8px; font-weight:700; text-transform:uppercase; }
+  .signal-type { font-size:7px; font-weight:700; text-transform:uppercase; }
   .signal-type.buy { color:var(--accent-green); }
   .signal-type.sell { color:var(--accent-red); }
-  .signal-time { font-size:7px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
-  .signal-details { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; font-family:'JetBrains Mono',monospace; font-size:8px; }
+  .signal-time { font-size:6px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+  .signal-details { display:grid; grid-template-columns:1fr 1fr 1fr; gap:2px; font-family:'JetBrains Mono',monospace; font-size:7px; }
   .signal-details span.lbl { color:var(--text-muted); font-size:6px; display:block; text-transform:uppercase; }
-  .empty-msg { text-align:center; color:var(--text-muted); font-size:9px; padding:12px 4px; }
+  .empty-msg { text-align:center; color:var(--text-muted); font-size:8px; padding:12px 4px; }
 
   /* ── Footer bar: settings + trades ───────────────────── */
   .footer-bar { display:grid; grid-template-columns:220px 1fr; gap:1px; background:var(--border); height:118px; flex-shrink:0; }
@@ -161,6 +164,7 @@
   .sandbox-warning strong { color:var(--accent-orange); }
   .sandbox-warning code { background:var(--bg-primary); padding:1px 4px; border-radius:2px; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--accent-green); }
 
+  @media (max-width:1200px) { .main-dual { grid-template-columns:1fr; overflow-y:auto; } .panel { min-height:360px; } }
   @media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms!important; transition-duration:0.01ms!important; } }
 </style>
 </head>
@@ -187,7 +191,7 @@
       <div class="header-stat"><div class="header-stat-label">24h Vol</div><div class="header-stat-value" id="vol24h">...</div></div>
       <div class="refresh-bar-wrap">
         <div class="refresh-bar-track"><div class="refresh-bar-fill" id="refresh-bar"></div></div>
-        <span class="refresh-countdown" id="refresh-countdown">5:00</span>
+        <span class="refresh-countdown" id="refresh-countdown">1:00</span>
       </div>
       <button class="ea-status active" id="eaToggle" aria-label="Toggle EA">
         <span class="ea-dot"></span><span id="eaLabel">EA Active</span>
@@ -205,6 +209,7 @@
     <span class="confluence-badge neutral" id="confluenceBadge">NEUTRAL</span>
     <span class="confluence-tf">H1: <b id="h1ClassTag">--</b></span>
     <span class="confluence-tf">M15: <b id="m15ClassTag">--</b></span>
+    <span class="confluence-tf">M5: <b id="m5ClassTag">--</b></span>
   </div>
 
   <div class="main-dual">
@@ -273,6 +278,39 @@
         <div class="panel-signals" id="signalList_m15"><div class="empty-msg">Fetching M15 data...</div></div>
       </div>
     </section>
+
+    <!-- M5 PANEL -->
+    <section class="panel" id="panel-m5">
+      <div class="panel-toolbar">
+        <span class="tf-badge m5">M5</span>
+        <div class="toolbar-group">
+          <button class="indicator-toggle on" data-tf="m5" data-ind="ma"><span class="dot"></span>MA</button>
+          <button class="indicator-toggle on" data-tf="m5" data-ind="bb"><span class="dot"></span>BB</button>
+          <button class="indicator-toggle on" data-tf="m5" data-ind="vol"><span class="dot"></span>VOL</button>
+          <button class="indicator-toggle" data-tf="m5" data-ind="signals"><span class="dot"></span>Sig</button>
+        </div>
+      </div>
+      <div class="panel-chart-container"><canvas id="mainChart_m5"></canvas></div>
+      <div class="panel-sub-indicators">
+        <div class="sub-indicator"><span class="sub-label">RSI</span><span class="sub-value" id="rsiValue_m5" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_m5"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">MACD</span><span class="sub-value" id="macdValue_m5" style="color:var(--accent-gold)">--</span><canvas id="macdChart_m5"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">STOCH</span><span class="sub-value" id="stochValue_m5" style="color:var(--accent-orange)">--</span><canvas id="stochChart_m5"></canvas></div>
+      </div>
+      <div class="panel-bottom">
+        <div class="panel-gauge-col">
+          <canvas class="gauge-canvas" id="gaugeCanvas_m5" width="200" height="110"></canvas>
+          <div class="gauge-signal-text" id="gaugeText_m5">LOADING</div>
+          <div class="gauge-label">M5 Strength</div>
+          <div class="chip-row">
+            <span class="chip neutral" id="chipRsi_m5">RSI</span>
+            <span class="chip neutral" id="chipMacd_m5">MACD</span>
+            <span class="chip neutral" id="chipStoch_m5">STOCH</span>
+            <span class="chip neutral" id="chipTrend_m5">TREND</span>
+          </div>
+        </div>
+        <div class="panel-signals" id="signalList_m5"><div class="empty-msg">Fetching M5 data...</div></div>
+      </div>
+    </section>
   </div>
 
   <div class="footer-bar">
@@ -289,8 +327,8 @@
       <button class="btn-apply" id="applySettings" style="margin-top:6px;">Apply</button>
     </div>
     <div class="footer-panel">
-      <div class="footer-title">EA Trades (Confluence-Triggered)</div>
-      <div id="tradeLog"><div class="empty-msg">No EA trades yet — waiting for H1 + M15 agreement</div></div>
+      <div class="footer-title">EA Trades (Confluence-Triggered · H1+M15+M5)</div>
+      <div id="tradeLog"><div class="empty-msg">No EA trades yet — waiting for timeframe agreement</div></div>
     </div>
   </div>
 </div>
@@ -298,12 +336,12 @@
 
 <script>
 // ============================================================
-// BTCUSDT DUAL-TIMEFRAME (H1 + M15) DASHBOARD — BYBIT LINEAR
+// BTCUSDT MULTI-TIMEFRAME (H1 + M15 + M5) DASHBOARD — BYBIT LINEAR
 // ============================================================
 
 const SYMBOL = 'BTCUSDT';
 const LIMIT = 200;
-const AUTO_REFRESH_MS = 5 * 60 * 1000;
+const AUTO_REFRESH_MS = 60 * 1000; // 60s — short enough to matter once M5 is in the mix
 const VISIBLE_CANDLES = 70;
 const WS_URL = 'wss://stream.bybit.com/v5/public/linear';
 
@@ -351,7 +389,8 @@ function makeTF(key,interval,label){
 }
 const tfH1 = makeTF('h1','60','H1');
 const tfM15 = makeTF('m15','15','M15');
-const TFS = [tfH1, tfM15];
+const tfM5 = makeTF('m5','5','M5');
+const TFS = [tfH1, tfM15, tfM5];
 
 // ── Utility ─────────────────────────────────────────────────
 function fmt(v,p){ if(v==null||isNaN(v)) return '--'; return Number(v).toFixed(p!=null?p:shared.pricePrecision); }
@@ -528,18 +567,26 @@ function renderSignals(tf){
     </div>`).join('');
 }
 
-// ── Confluence + EA trade logic ─────────────────────────────
+// ── Confluence + EA trade logic (now 3 timeframes: H1, M15, M5) ────────────
 function classBucket(cls){ if(cls.includes('BUY')) return 'buy'; if(cls.includes('SELL')) return 'sell'; return 'neutral'; }
 
 function updateConfluence(){
   document.getElementById('h1ClassTag').textContent = tfH1.lastClass;
   document.getElementById('m15ClassTag').textContent = tfM15.lastClass;
+  document.getElementById('m5ClassTag').textContent = tfM5.lastClass;
 
-  const b1=classBucket(tfH1.lastClass), b2=classBucket(tfM15.lastClass);
+  const buckets = TFS.map(tf=>classBucket(tf.lastClass));
+  const buyCount = buckets.filter(b=>b==='buy').length;
+  const sellCount = buckets.filter(b=>b==='sell').length;
+  const anyStrongBuy = TFS.some(tf=>tf.lastClass==='STRONG BUY');
+  const anyStrongSell = TFS.some(tf=>tf.lastClass==='STRONG SELL');
+
   let conf='NEUTRAL', badgeCls='neutral';
-  if(b1==='buy' && b2==='buy'){ conf = (tfH1.lastClass==='STRONG BUY'||tfM15.lastClass==='STRONG BUY') ? 'STRONG BUY' : 'BUY'; badgeCls='buy'; }
-  else if(b1==='sell' && b2==='sell'){ conf = (tfH1.lastClass==='STRONG SELL'||tfM15.lastClass==='STRONG SELL') ? 'STRONG SELL' : 'SELL'; badgeCls='sell'; }
-  else if(b1!=='neutral' && b2!=='neutral' && b1!==b2){ conf='MIXED'; badgeCls='mixed'; }
+  if(buyCount===3){ conf = anyStrongBuy ? 'STRONG BUY' : 'BUY'; badgeCls='buy'; }
+  else if(sellCount===3){ conf = anyStrongSell ? 'STRONG SELL' : 'SELL'; badgeCls='sell'; }
+  else if(buyCount===2 && sellCount===0){ conf='BUY'; badgeCls='buy'; }
+  else if(sellCount===2 && buyCount===0){ conf='SELL'; badgeCls='sell'; }
+  else if(buyCount>0 && sellCount>0){ conf='MIXED'; badgeCls='mixed'; }
   else { conf='NEUTRAL'; badgeCls='neutral'; }
 
   const badge=document.getElementById('confluenceBadge');
@@ -584,7 +631,7 @@ function updateOpenTrades(){
 
 function renderTrades(){
   const el=document.getElementById('tradeLog');
-  if(shared.trades.length===0){ el.innerHTML='<div class="empty-msg">No EA trades yet — waiting for H1 + M15 agreement</div>'; return; }
+  if(shared.trades.length===0){ el.innerHTML='<div class="empty-msg">No EA trades yet — waiting for timeframe agreement</div>'; return; }
   el.innerHTML=shared.trades.map(t=>{
     const pnl = t.status==='open' ? (t.type==='buy'?(shared.currentPrice-t.entry):(t.entry-shared.currentPrice))*t.lot : t.pnl;
     return `<div class="trade-row">
@@ -836,8 +883,8 @@ function handleFetchFailure(){
 function hideSandboxWarning(){ document.getElementById('sandbox-warning').style.display='none'; }
 
 async function loadInitialData(){
-  const results = await Promise.all([fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchTicker()]);
-  if(!results[0] && !results[1]){ handleFetchFailure(); return; }
+  const results = await Promise.all([fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchKlinesFor(tfM5), fetchTicker()]);
+  if(!results[0] && !results[1] && !results[2]){ handleFetchFailure(); return; }
   hideSandboxWarning();
   TFS.forEach(tf=>{
     tf.dataReady=true;
@@ -861,7 +908,7 @@ function startAutoRefresh(){
   shared.secondsLeft=AUTO_REFRESH_MS/1000;updateCountdownUI();
   shared.countdownTimer=setInterval(()=>{shared.secondsLeft--;if(shared.secondsLeft<0)shared.secondsLeft=0;updateCountdownUI()},1000);
   shared.autoRefreshTimer=setInterval(async ()=>{
-    await Promise.all([fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchTicker()]);
+    await Promise.all([fetchKlinesFor(tfH1), fetchKlinesFor(tfM15), fetchKlinesFor(tfM5), fetchTicker()]);
     TFS.forEach(tf=>{ computeIndicators(tf); drawAllCharts(tf); });
     updateHeader(); renderTrades();
     shared.secondsLeft=AUTO_REFRESH_MS/1000;
@@ -880,7 +927,7 @@ function connectWebSocket(){
     shared.wsConnected=true; shared.reconnectAttempts=0; shared.reconnectDelay=2000;
     document.getElementById('connBadge').textContent='Connected';
     document.getElementById('connBadge').className='conn-badge connected';
-    shared.ws.send(JSON.stringify({op:'subscribe',args:[`kline.60.${SYMBOL}`,`kline.15.${SYMBOL}`,`tickers.${SYMBOL}`]}));
+    shared.ws.send(JSON.stringify({op:'subscribe',args:[`kline.60.${SYMBOL}`,`kline.15.${SYMBOL}`,`kline.5.${SYMBOL}`,`tickers.${SYMBOL}`]}));
     clearInterval(shared.pingTimer);
     shared.pingTimer=setInterval(()=>{ if(shared.ws&&shared.ws.readyState===1) shared.ws.send(JSON.stringify({op:'ping'})); },20000);
   };
@@ -890,6 +937,7 @@ function connectWebSocket(){
     if(!msg.topic) return;
     if(msg.topic.startsWith('kline.60.')) handleKlineMsg(tfH1,msg);
     else if(msg.topic.startsWith('kline.15.')) handleKlineMsg(tfM15,msg);
+    else if(msg.topic.startsWith('kline.5.')) handleKlineMsg(tfM5,msg);
     else if(msg.topic.startsWith('tickers.')) handleTickerMsg(msg);
   };
 
@@ -939,7 +987,7 @@ function handleTickerMsg(msg){
 document.querySelectorAll('.indicator-toggle').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const key=btn.dataset.tf, ind=btn.dataset.ind;
-    const tf = key==='h1'?tfH1:tfM15;
+    const tf = key==='h1'?tfH1:(key==='m15'?tfM15:tfM5);
     const map={ma:'showMA',bb:'showBB',vol:'showVol',signals:'showSignals'};
     tf.indicators[map[ind]]=!tf.indicators[map[ind]];
     btn.classList.toggle('on',tf.indicators[map[ind]]);
