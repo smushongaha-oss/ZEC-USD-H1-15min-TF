@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V75 H1 / H4 / D1 Live Dashboard — MA Cross + ATR/RSI</title>
+<title>V75 H1 / M5 / D1 Live Dashboard — MA Cross + ATR/RSI</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -88,7 +88,7 @@
   .panel { display:flex; flex-direction:column; background:var(--bg-primary); min-height:0; min-width:0; }
   .panel-toolbar { display:flex; align-items:center; justify-content:space-between; padding:3px 8px; border-bottom:1px solid var(--border); background:var(--bg-secondary); flex-shrink:0; height:26px; }
   .tf-badge { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:2px 8px; border-radius:3px; background:var(--accent-purple-dim); color:var(--accent-purple); border:1px solid rgba(167,139,250,0.3); }
-  .tf-badge.h4 { background:rgba(255,140,66,0.15); color:var(--accent-orange); border-color:rgba(255,140,66,0.3); }
+  .tf-badge.m5 { background:rgba(255,140,66,0.15); color:var(--accent-orange); border-color:rgba(255,140,66,0.3); }
   .tf-badge.d1 { background:var(--accent-gold-dim); color:var(--accent-gold); border-color:rgba(255,193,7,0.3); }
   .toolbar-group { display:flex; align-items:center; gap:3px; }
   .indicator-toggle { padding:2px 5px; font-size:8px; font-weight:500; border:1px solid var(--border); border-radius:3px; background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:3px; transition:all 0.2s; }
@@ -207,7 +207,7 @@
     <span class="confluence-label">Confluence</span>
     <span class="confluence-badge neutral" id="confluenceBadge">NEUTRAL</span>
     <span class="confluence-tf">H1: <b id="h1ClassTag">--</b></span>
-    <span class="confluence-tf">H4: <b id="h4ClassTag">--</b></span>
+    <span class="confluence-tf">M5: <b id="m5ClassTag">--</b></span>
     <span class="confluence-tf">D1: <b id="d1ClassTag">--</b></span>
   </div>
 
@@ -242,33 +242,33 @@
       </div>
     </section>
 
-    <!-- H4 PANEL -->
-    <section class="panel" id="panel-h4">
+    <!-- M5 PANEL -->
+    <section class="panel" id="panel-m5">
       <div class="panel-toolbar">
-        <span class="tf-badge h4">H4</span>
+        <span class="tf-badge m5">M5</span>
         <div class="toolbar-group">
-          <button class="indicator-toggle on" data-tf="h4" data-ind="ma"><span class="dot"></span>MA</button>
-          <button class="indicator-toggle" data-tf="h4" data-ind="signals"><span class="dot"></span>Sig</button>
+          <button class="indicator-toggle on" data-tf="m5" data-ind="ma"><span class="dot"></span>MA</button>
+          <button class="indicator-toggle" data-tf="m5" data-ind="signals"><span class="dot"></span>Sig</button>
         </div>
       </div>
-      <div class="panel-chart-container"><canvas id="mainChart_h4"></canvas></div>
+      <div class="panel-chart-container"><canvas id="mainChart_m5"></canvas></div>
       <div class="panel-sub-indicators">
-        <div class="sub-indicator"><span class="sub-label">ATR(14)</span><span class="sub-value" id="atrValue_h4" style="color:var(--accent-orange)">--</span><canvas id="atrChart_h4"></canvas></div>
-        <div class="sub-indicator"><span class="sub-label">RSI(14)</span><span class="sub-value" id="rsiValue_h4" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_h4"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">ATR(14)</span><span class="sub-value" id="atrValue_m5" style="color:var(--accent-orange)">--</span><canvas id="atrChart_m5"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">RSI(14)</span><span class="sub-value" id="rsiValue_m5" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_m5"></canvas></div>
       </div>
       <div class="panel-bottom">
         <div class="panel-gauge-col">
-          <canvas class="gauge-canvas" id="gaugeCanvas_h4" width="160" height="90"></canvas>
-          <div class="gauge-signal-text" id="gaugeText_h4">LOADING</div>
-          <div class="gauge-label">H4 Strength</div>
+          <canvas class="gauge-canvas" id="gaugeCanvas_m5" width="160" height="90"></canvas>
+          <div class="gauge-signal-text" id="gaugeText_m5">LOADING</div>
+          <div class="gauge-label">M5 Strength</div>
           <div class="chip-row">
-            <span class="chip neutral" id="chipRsi_h4">RSI</span>
-            <span class="chip neutral" id="chipMaCross_h4">MA X</span>
-            <span class="chip neutral" id="chipPrice_h4">PRICE</span>
-            <span class="chip neutral" id="chipTrend_h4">TREND</span>
+            <span class="chip neutral" id="chipRsi_m5">RSI</span>
+            <span class="chip neutral" id="chipMaCross_m5">MA X</span>
+            <span class="chip neutral" id="chipPrice_m5">PRICE</span>
+            <span class="chip neutral" id="chipTrend_m5">TREND</span>
           </div>
         </div>
-        <div class="panel-signals" id="signalList_h4"><div class="empty-msg">Fetching H4 data...</div></div>
+        <div class="panel-signals" id="signalList_m5"><div class="empty-msg">Fetching M5 data...</div></div>
       </div>
     </section>
 
@@ -317,7 +317,7 @@
       <button class="btn-apply" id="applySettings" style="margin-top:6px;">Apply</button>
     </div>
     <div class="footer-panel">
-      <div class="footer-title">EA Trades (Confluence-Triggered · H1+H4+D1)</div>
+      <div class="footer-title">EA Trades (Confluence-Triggered · H1+M5+D1)</div>
       <div id="tradeLog"><div class="empty-msg">No EA trades yet — waiting for timeframe agreement</div></div>
     </div>
   </div>
@@ -326,7 +326,7 @@
 
 <script>
 // ============================================================
-// VOLATILITY 75 INDEX TRIPLE-TIMEFRAME (H1 + H4 + D1) DASHBOARD
+// VOLATILITY 75 INDEX TRIPLE-TIMEFRAME (H1 + M5 + D1) DASHBOARD
 // Data source: Deriv WebSocket API — native 2s tick cadence
 // Indicators: MA Fast/Slow cross overlay + ATR(14)/RSI(14) panel
 // (matches MT5-style V75 chart: 2 MAs on price, ATR+RSI below)
@@ -367,9 +367,9 @@ function makeTF(key,granularity,label,reqId){
   };
 }
 const tfH1 = makeTF('h1', 3600, 'H1', 1);
-const tfH4 = makeTF('h4', 14400, 'H4', 2);
+const tfM5 = makeTF('m5', 300, 'M5', 2);
 const tfD1 = makeTF('d1', 86400, 'D1', 3);
-const TFS = [tfH1, tfH4, tfD1];
+const TFS = [tfH1, tfM5, tfD1];
 
 // ── Utility ─────────────────────────────────────────────────
 function fmt(v,p){ if(v==null||isNaN(v)) return '--'; return Number(v).toFixed(p!=null?p:shared.pricePrecision); }
@@ -503,7 +503,7 @@ function classBucket(cls){ if(cls.includes('BUY')) return 'buy'; if(cls.includes
 
 function updateConfluence(){
   document.getElementById('h1ClassTag').textContent = tfH1.lastClass;
-  document.getElementById('h4ClassTag').textContent = tfH4.lastClass;
+  document.getElementById('m5ClassTag').textContent = tfM5.lastClass;
   document.getElementById('d1ClassTag').textContent = tfD1.lastClass;
 
   const buckets = TFS.map(tf=>classBucket(tf.lastClass));
