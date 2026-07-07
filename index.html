@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V75 H1 / M5 / M15 Live Dashboard — MA Cross + ATR/RSI</title>
+<title>V75 H4 / M15 / M5 Live Dashboard — Triple-Screen Confluence EA</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -71,6 +71,7 @@
   .ea-dot { width:5px; height:5px; border-radius:50%; background:currentColor; }
   .ea-status.active .ea-dot { animation:pulse-dot 2s infinite; }
   @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .icon-toggle { padding:3px 7px; font-size:11px; }
 
   /* ── Confluence strip ─────────────────────────────────── */
   .confluence-strip { display:flex; align-items:center; justify-content:center; gap:10px; padding:5px 12px; background:var(--bg-tertiary); border-bottom:1px solid var(--border); flex-shrink:0; height:26px; flex-wrap:wrap; }
@@ -83,6 +84,16 @@
   .confluence-tf { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--text-secondary); }
   .confluence-tf b { color:var(--text-primary); }
 
+  /* ── Triple-screen tracker strip ─────────────────────────── */
+  .tracker-strip { display:flex; align-items:center; gap:6px; padding:4px 12px; background:var(--bg-secondary); border-bottom:1px solid var(--border); flex-shrink:0; height:24px; }
+  .tracker-step { padding:2px 8px; border-radius:3px; font-size:8px; font-weight:700; display:flex; gap:5px; align-items:center; border:1px solid var(--border); background:var(--bg-tertiary); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; transition:all 0.2s; }
+  .tracker-step.buy { border-color:var(--accent-green); color:var(--accent-green); background:var(--accent-green-dim); }
+  .tracker-step.sell { border-color:var(--accent-red); color:var(--accent-red); background:var(--accent-red-dim); }
+  .tracker-step .tracker-label { opacity:0.7; }
+  .tracker-arrow { color:var(--text-muted); font-size:10px; }
+  .stats-mini { margin-left:auto; display:flex; gap:10px; font-size:8px; color:var(--text-secondary); font-family:'JetBrains Mono',monospace; white-space:nowrap; }
+  .stats-mini b { color:var(--text-primary); }
+
   /* ── Triple panel layout ──────────────────────────────── */
   .main-dual { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px; background:var(--border); flex:1; min-height:0; }
   .panel { display:flex; flex-direction:column; background:var(--bg-primary); min-height:0; min-width:0; }
@@ -90,6 +101,7 @@
   .tf-badge { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; padding:2px 8px; border-radius:3px; background:var(--accent-purple-dim); color:var(--accent-purple); border:1px solid rgba(167,139,250,0.3); }
   .tf-badge.m5 { background:rgba(255,140,66,0.15); color:var(--accent-orange); border-color:rgba(255,140,66,0.3); }
   .tf-badge.m15 { background:var(--accent-gold-dim); color:var(--accent-gold); border-color:rgba(255,193,7,0.3); }
+  .tf-badge.h4 { background:var(--accent-cyan-dim); color:var(--accent-cyan); border-color:rgba(0,212,255,0.3); }
   .toolbar-group { display:flex; align-items:center; gap:3px; }
   .indicator-toggle { padding:2px 5px; font-size:8px; font-weight:500; border:1px solid var(--border); border-radius:3px; background:var(--bg-tertiary); color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:3px; transition:all 0.2s; }
   .indicator-toggle.on { border-color:var(--accent-cyan); color:var(--accent-cyan); background:var(--accent-cyan-dim); }
@@ -130,25 +142,26 @@
   .empty-msg { text-align:center; color:var(--text-muted); font-size:8px; padding:10px 3px; }
 
   /* ── Footer bar: settings + trades ───────────────────── */
-  .footer-bar { display:grid; grid-template-columns:220px 1fr; gap:1px; background:var(--border); height:118px; flex-shrink:0; }
+  .footer-bar { display:grid; grid-template-columns:260px 1fr; gap:1px; background:var(--border); height:150px; flex-shrink:0; }
   .footer-panel { background:var(--bg-secondary); padding:6px 10px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
   .footer-panel::-webkit-scrollbar { height:3px; width:3px; }
   .footer-panel::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
   .footer-title { font-size:8px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:5px; }
-  .settings-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .settings-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:5px; }
   .setting-group { display:flex; flex-direction:column; gap:2px; }
+  .setting-group.span2 { grid-column:span 2; }
   .setting-label { font-size:7px; font-weight:600; text-transform:uppercase; letter-spacing:0.4px; color:var(--text-muted); }
-  .setting-input { width:100%; padding:3px 5px; font-family:'JetBrains Mono',monospace; font-size:9px; border:1px solid var(--border); border-radius:3px; background:var(--bg-card); color:var(--text-primary); outline:none; }
-  .setting-input:focus { border-color:var(--accent-purple); }
+  .setting-input, .setting-select { width:100%; padding:3px 5px; font-family:'JetBrains Mono',monospace; font-size:9px; border:1px solid var(--border); border-radius:3px; background:var(--bg-card); color:var(--text-primary); outline:none; }
+  .setting-input:focus, .setting-select:focus { border-color:var(--accent-purple); }
   .btn-apply { padding:4px 10px; font-size:9px; font-weight:600; border:none; border-radius:3px; cursor:pointer; background:linear-gradient(135deg,var(--accent-purple),var(--accent-cyan)); color:#000; text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap; }
 
-  .trade-row { display:grid; grid-template-columns:auto auto 1fr auto auto; gap:6px; align-items:center; padding:3px 0; border-bottom:1px solid var(--border); font-size:9px; }
+  .trade-row { display:grid; grid-template-columns:auto auto 1fr auto; gap:6px; align-items:center; padding:3px 0; border-bottom:1px solid var(--border); font-size:9px; }
   .trade-icon { width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:6px; flex-shrink:0; }
   .trade-icon.buy { background:var(--accent-green-dim); color:var(--accent-green); }
   .trade-icon.sell { background:var(--accent-red-dim); color:var(--accent-red); }
   .trade-tag { font-size:7px; font-weight:700; padding:1px 4px; border-radius:2px; background:var(--bg-card); color:var(--text-secondary); }
   .trade-price { font-family:'JetBrains Mono',monospace; font-size:8px; }
-  .trade-pnl { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:8px; }
+  .trade-pnl { font-family:'JetBrains Mono',monospace; font-weight:600; font-size:8px; text-align:right; }
   .trade-pnl.positive { color:var(--accent-green); }
   .trade-pnl.negative { color:var(--accent-red); }
 
@@ -192,6 +205,9 @@
         <div class="refresh-bar-track"><div class="refresh-bar-fill" id="refresh-bar"></div></div>
         <span class="refresh-countdown" id="refresh-countdown">2.0s</span>
       </div>
+      <button class="ea-status active icon-toggle" id="soundToggle" aria-label="Toggle Sound Alerts" title="Toggle sound alerts">
+        <span id="soundIcon">🔊</span>
+      </button>
       <button class="ea-status active" id="eaToggle" aria-label="Toggle EA">
         <span class="ea-dot"></span><span id="eaLabel">EA Active</span>
       </button>
@@ -206,69 +222,55 @@
   <div class="confluence-strip">
     <span class="confluence-label">Confluence</span>
     <span class="confluence-badge neutral" id="confluenceBadge">NEUTRAL</span>
-    <span class="confluence-tf">H1: <b id="h1ClassTag">--</b></span>
-    <span class="confluence-tf">M5: <b id="m5ClassTag">--</b></span>
+    <span class="confluence-tf">H4: <b id="h4ClassTag">--</b></span>
     <span class="confluence-tf">M15: <b id="m15ClassTag">--</b></span>
+    <span class="confluence-tf">M5: <b id="m5ClassTag">--</b></span>
+  </div>
+
+  <!-- Triple-screen confirmation tracker: H4 sets bias, M15 confirms setup, M5 fires the entry trigger -->
+  <div class="tracker-strip">
+    <div class="tracker-step pending" id="trackerBias"><span class="tracker-label">H4 Bias</span><span class="tracker-state">WAIT</span></div>
+    <span class="tracker-arrow">→</span>
+    <div class="tracker-step pending" id="trackerSetup"><span class="tracker-label">M15 Setup</span><span class="tracker-state">WAIT</span></div>
+    <span class="tracker-arrow">→</span>
+    <div class="tracker-step pending" id="trackerTrigger"><span class="tracker-label">M5 Trigger</span><span class="tracker-state">WAIT</span></div>
+    <div class="stats-mini">
+      <span>Trades <b id="statTrades">0</b></span>
+      <span>Win <b id="statWinRate">0%</b></span>
+      <span>Net <b id="statNetR">+0.00R</b></span>
+      <span>Today <b id="statDailyPnl">0.00</b></span>
+      <span>EA <b id="statBreaker">ACTIVE</b></span>
+    </div>
   </div>
 
   <div class="main-dual">
-    <!-- H1 PANEL -->
-    <section class="panel" id="panel-h1">
+    <!-- H4 PANEL -->
+    <section class="panel" id="panel-h4">
       <div class="panel-toolbar">
-        <span class="tf-badge">H1</span>
+        <span class="tf-badge h4">H4</span>
         <div class="toolbar-group">
-          <button class="indicator-toggle on" data-tf="h1" data-ind="ma"><span class="dot"></span>MA</button>
-          <button class="indicator-toggle" data-tf="h1" data-ind="signals"><span class="dot"></span>Sig</button>
+          <button class="indicator-toggle on" data-tf="h4" data-ind="ma"><span class="dot"></span>MA</button>
+          <button class="indicator-toggle" data-tf="h4" data-ind="signals"><span class="dot"></span>Sig</button>
         </div>
       </div>
-      <div class="panel-chart-container"><canvas id="mainChart_h1"></canvas></div>
+      <div class="panel-chart-container"><canvas id="mainChart_h4"></canvas></div>
       <div class="panel-sub-indicators">
-        <div class="sub-indicator"><span class="sub-label">ATR(14)</span><span class="sub-value" id="atrValue_h1" style="color:var(--accent-orange)">--</span><canvas id="atrChart_h1"></canvas></div>
-        <div class="sub-indicator"><span class="sub-label">RSI(14)</span><span class="sub-value" id="rsiValue_h1" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_h1"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">ATR(14)</span><span class="sub-value" id="atrValue_h4" style="color:var(--accent-orange)">--</span><canvas id="atrChart_h4"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">RSI(14)</span><span class="sub-value" id="rsiValue_h4" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_h4"></canvas></div>
       </div>
       <div class="panel-bottom">
         <div class="panel-gauge-col">
-          <canvas class="gauge-canvas" id="gaugeCanvas_h1" width="160" height="90"></canvas>
-          <div class="gauge-signal-text" id="gaugeText_h1">LOADING</div>
-          <div class="gauge-label">H1 Strength</div>
+          <canvas class="gauge-canvas" id="gaugeCanvas_h4" width="160" height="90"></canvas>
+          <div class="gauge-signal-text" id="gaugeText_h4">LOADING</div>
+          <div class="gauge-label">H4 Strength</div>
           <div class="chip-row">
-            <span class="chip neutral" id="chipRsi_h1">RSI</span>
-            <span class="chip neutral" id="chipMaCross_h1">MA X</span>
-            <span class="chip neutral" id="chipPrice_h1">PRICE</span>
-            <span class="chip neutral" id="chipTrend_h1">TREND</span>
+            <span class="chip neutral" id="chipRsi_h4">RSI</span>
+            <span class="chip neutral" id="chipMaCross_h4">MA X</span>
+            <span class="chip neutral" id="chipPrice_h4">PRICE</span>
+            <span class="chip neutral" id="chipTrend_h4">TREND</span>
           </div>
         </div>
-        <div class="panel-signals" id="signalList_h1"><div class="empty-msg">Fetching H1 data...</div></div>
-      </div>
-    </section>
-
-    <!-- M5 PANEL -->
-    <section class="panel" id="panel-m5">
-      <div class="panel-toolbar">
-        <span class="tf-badge m5">M5</span>
-        <div class="toolbar-group">
-          <button class="indicator-toggle on" data-tf="m5" data-ind="ma"><span class="dot"></span>MA</button>
-          <button class="indicator-toggle" data-tf="m5" data-ind="signals"><span class="dot"></span>Sig</button>
-        </div>
-      </div>
-      <div class="panel-chart-container"><canvas id="mainChart_m5"></canvas></div>
-      <div class="panel-sub-indicators">
-        <div class="sub-indicator"><span class="sub-label">ATR(14)</span><span class="sub-value" id="atrValue_m5" style="color:var(--accent-orange)">--</span><canvas id="atrChart_m5"></canvas></div>
-        <div class="sub-indicator"><span class="sub-label">RSI(14)</span><span class="sub-value" id="rsiValue_m5" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_m5"></canvas></div>
-      </div>
-      <div class="panel-bottom">
-        <div class="panel-gauge-col">
-          <canvas class="gauge-canvas" id="gaugeCanvas_m5" width="160" height="90"></canvas>
-          <div class="gauge-signal-text" id="gaugeText_m5">LOADING</div>
-          <div class="gauge-label">M5 Strength</div>
-          <div class="chip-row">
-            <span class="chip neutral" id="chipRsi_m5">RSI</span>
-            <span class="chip neutral" id="chipMaCross_m5">MA X</span>
-            <span class="chip neutral" id="chipPrice_m5">PRICE</span>
-            <span class="chip neutral" id="chipTrend_m5">TREND</span>
-          </div>
-        </div>
-        <div class="panel-signals" id="signalList_m5"><div class="empty-msg">Fetching M5 data...</div></div>
+        <div class="panel-signals" id="signalList_h4"><div class="empty-msg">Fetching H4 data...</div></div>
       </div>
     </section>
 
@@ -301,23 +303,69 @@
         <div class="panel-signals" id="signalList_m15"><div class="empty-msg">Fetching M15 data...</div></div>
       </div>
     </section>
+
+    <!-- M5 PANEL -->
+    <section class="panel" id="panel-m5">
+      <div class="panel-toolbar">
+        <span class="tf-badge m5">M5</span>
+        <div class="toolbar-group">
+          <button class="indicator-toggle on" data-tf="m5" data-ind="ma"><span class="dot"></span>MA</button>
+          <button class="indicator-toggle" data-tf="m5" data-ind="signals"><span class="dot"></span>Sig</button>
+        </div>
+      </div>
+      <div class="panel-chart-container"><canvas id="mainChart_m5"></canvas></div>
+      <div class="panel-sub-indicators">
+        <div class="sub-indicator"><span class="sub-label">ATR(14)</span><span class="sub-value" id="atrValue_m5" style="color:var(--accent-orange)">--</span><canvas id="atrChart_m5"></canvas></div>
+        <div class="sub-indicator"><span class="sub-label">RSI(14)</span><span class="sub-value" id="rsiValue_m5" style="color:var(--accent-cyan)">--</span><canvas id="rsiChart_m5"></canvas></div>
+      </div>
+      <div class="panel-bottom">
+        <div class="panel-gauge-col">
+          <canvas class="gauge-canvas" id="gaugeCanvas_m5" width="160" height="90"></canvas>
+          <div class="gauge-signal-text" id="gaugeText_m5">LOADING</div>
+          <div class="gauge-label">M5 Strength</div>
+          <div class="chip-row">
+            <span class="chip neutral" id="chipRsi_m5">RSI</span>
+            <span class="chip neutral" id="chipMaCross_m5">MA X</span>
+            <span class="chip neutral" id="chipPrice_m5">PRICE</span>
+            <span class="chip neutral" id="chipTrend_m5">TREND</span>
+          </div>
+        </div>
+        <div class="panel-signals" id="signalList_m5"><div class="empty-msg">Fetching M5 data...</div></div>
+      </div>
+    </section>
   </div>
 
   <div class="footer-bar">
     <div class="footer-panel">
       <div class="footer-title">EA Settings</div>
       <div class="settings-grid">
-        <div class="setting-group"><span class="setting-label">Lot</span><input class="setting-input" type="number" id="lotSize" value="0.1" step="0.01" min="0.01"></div>
-        <div class="setting-group"><span class="setting-label">SL (pts)</span><input class="setting-input" type="number" id="stopLoss" value="200" step="10" min="0"></div>
-        <div class="setting-group"><span class="setting-label">TP (pts)</span><input class="setting-input" type="number" id="takeProfit" value="400" step="10" min="0"></div>
+        <div class="setting-group"><span class="setting-label">Risk Mode</span>
+          <select class="setting-select" id="riskMode">
+            <option value="fixed">Fixed Lot</option>
+            <option value="risk">Risk %</option>
+          </select>
+        </div>
+        <div class="setting-group"><span class="setting-label">Lot (fixed)</span><input class="setting-input" type="number" id="lotSize" value="0.1" step="0.01" min="0.01"></div>
         <div class="setting-group"><span class="setting-label">Max Trades</span><input class="setting-input" type="number" id="maxTrades" value="3" step="1" min="1" max="10"></div>
+
+        <div class="setting-group"><span class="setting-label">Balance</span><input class="setting-input" type="number" id="balance" value="1000" step="50" min="0"></div>
+        <div class="setting-group"><span class="setting-label">Risk %/Trade</span><input class="setting-input" type="number" id="riskPercent" value="1" step="0.1" min="0.1" max="10"></div>
+        <div class="setting-group"><span class="setting-label">Max Daily Loss %</span><input class="setting-input" type="number" id="maxDailyLoss" value="5" step="0.5" min="1" max="20"></div>
+
+        <div class="setting-group"><span class="setting-label">SL (pts)</span><input class="setting-input" type="number" id="stopLoss" value="200" step="10" min="0"></div>
+        <div class="setting-group"><span class="setting-label">TP2 (pts)</span><input class="setting-input" type="number" id="takeProfit" value="400" step="10" min="0"></div>
+        <div class="setting-group"><span class="setting-label">TP1 (R mult.)</span><input class="setting-input" type="number" id="tp1RMultiple" value="1" step="0.1" min="0.2" max="3"></div>
+
+        <div class="setting-group"><span class="setting-label">Trail × ATR</span><input class="setting-input" type="number" id="trailMultiplier" value="1.5" step="0.1" min="0.5" max="5"></div>
+        <div class="setting-group"><span class="setting-label">Cooldown (s)</span><input class="setting-input" type="number" id="cooldownSec" value="60" step="10" min="0"></div>
         <div class="setting-group"><span class="setting-label">MA Fast</span><input class="setting-input" type="number" id="maFast" value="20" step="1" min="5" max="50"></div>
+
         <div class="setting-group"><span class="setting-label">MA Slow</span><input class="setting-input" type="number" id="maSlow" value="50" step="1" min="20" max="200"></div>
       </div>
       <button class="btn-apply" id="applySettings" style="margin-top:6px;">Apply</button>
     </div>
     <div class="footer-panel">
-      <div class="footer-title">EA Trades (Confluence-Triggered · H1+M5+M15)</div>
+      <div class="footer-title">EA Trades (Triple-Screen Confirmed · H4→M15→M5 · partial TP + ATR trail)</div>
       <div id="tradeLog"><div class="empty-msg">No EA trades yet — waiting for timeframe agreement</div></div>
     </div>
   </div>
@@ -326,10 +374,11 @@
 
 <script>
 // ============================================================
-// VOLATILITY 75 INDEX TRIPLE-TIMEFRAME (H1 + M5 + M15) DASHBOARD
+// VOLATILITY 75 INDEX TRIPLE-SCREEN (H4 bias → M15 setup → M5 trigger)
 // Data source: Deriv WebSocket API — native 2s tick cadence
-// Indicators: MA Fast/Slow cross overlay + ATR(14)/RSI(14) panel
-// (matches MT5-style V75 chart: 2 MAs on price, ATR+RSI below)
+// Indicators: MA Fast/Slow cross + ATR(14)/RSI(14) + weighted momentum score
+// Trade engine: risk-% or fixed lot sizing, partial TP1 + ATR trailing stop,
+// per-trade R-multiple tracking, cooldown + daily loss circuit breaker.
 // ============================================================
 
 const SYMBOL = 'R_75';
@@ -342,17 +391,25 @@ const CONNECT_TIMEOUT_MS = 9000;
 const shared = {
   eaActive:true, currentPrice:0, prevPrice:0, sessionHigh:-Infinity, sessionLow:Infinity, openPrice:null,
   priceChange:0, tickCount:0, pricePrecision:2, trades:[],
-  settings:{lotSize:0.1,stopLoss:200,takeProfit:400,maxTrades:3,maFast:20,maSlow:50},
+  settings:{
+    lotSize:0.1, stopLoss:200, takeProfit:400, maxTrades:3, maFast:20, maSlow:50,
+    riskMode:'fixed', balance:1000, riskPercent:1,
+    trailMultiplier:1.5, tp1RMultiple:1, cooldownSec:60, maxDailyLossPercent:5,
+    soundEnabled:true
+  },
   ws:null, wsConnected:false, reconnectTimer:null, reconnectAttempts:0, reconnectDelay:2000, MAX_RECONNECT:10,
   connectTimeoutTimer:null, isSandboxed:false, lastTickTime:null, tickTimerInterval:null,
-  lastConfluence:'NEUTRAL'
+  lastConfluence:'NEUTRAL', lastTradeTime:0,
+  m5AlignedDirection:null,
+  dailyPnL:0, dailyDate:new Date().toDateString(), dailyLossBreaker:false,
+  stats:{trades:0, wins:0, losses:0, totalR:0}
 };
 
 function makeTF(key,granularity,label,reqId){
   return {
     key, interval:granularity, label, reqId,
-    candles:[], indValues:null, dataReady:false, lastClass:'NEUTRAL', lastScore:0,
-    signals:[],
+    candles:[], indValues:null, dataReady:false, lastClass:'NEUTRAL', lastScore:0, quiet:false,
+    signals:[], lastSignalTime:null,
     indicators:{showMA:true,showSignals:false},
     canvas:{
       main:document.getElementById(`mainChart_${key}`),
@@ -366,20 +423,37 @@ function makeTF(key,granularity,label,reqId){
     }); }
   };
 }
-const tfH1 = makeTF('h1', 3600, 'H1', 1);
-const tfM5 = makeTF('m5', 300, 'M5', 2);
+const tfH4 = makeTF('h4', 14400, 'H4', 1);
 const tfM15 = makeTF('m15', 900, 'M15', 3);
-const TFS = [tfH1, tfM5, tfM15];
+const tfM5 = makeTF('m5', 300, 'M5', 2);
+const TFS = [tfH4, tfM15, tfM5];
 
 // ── Utility ─────────────────────────────────────────────────
 function fmt(v,p){ if(v==null||isNaN(v)) return '--'; return Number(v).toFixed(p!=null?p:shared.pricePrecision); }
 function fmtCompact(v){ if(v==null||isNaN(v)) return '--'; if(v>=1e9) return (v/1e9).toFixed(2)+'B'; if(v>=1e6) return (v/1e6).toFixed(2)+'M'; if(v>=1e3) return (v/1e3).toFixed(2)+'K'; return String(Math.round(v)); }
 function detectPrecision(str){ const s=String(str); const i=s.indexOf('.'); return i===-1?2:(s.length-i-1); }
 function timeAgo(ts){ const d=Date.now()-ts; const m=Math.floor(d/60000); if(m<1) return 'now'; if(m<60) return m+'m ago'; const h=Math.floor(m/60); return h+'h ago'; }
+function nowClock(){ const d=new Date(); return d.toTimeString().slice(0,8); }
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
 function showToast(type,msg){
   const c=document.getElementById('toastContainer');
   const t=document.createElement('div'); t.className='toast '+type; t.textContent=msg;
   c.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+
+// ── Sound alerts (Web Audio, no external assets) ────────────
+let audioCtx=null;
+function playBeep(freq){
+  if(!shared.settings.soundEnabled) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type='sine'; o.frequency.value=freq;
+    g.gain.setValueAtTime(0.16,audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.28);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+0.28);
+  }catch(e){ /* audio unsupported/blocked — fail silently */ }
 }
 
 // ── Indicator math (pure, shared across timeframes) ─────────
@@ -412,11 +486,15 @@ function computeATR(highs,lows,closes,period){
   return out;
 }
 
-// ── Per-timeframe indicator + gauge + signal pipeline ───────
-// Composite bias uses 4 confluence checks (mirrors MT5 chart's MA-cross + RSI style):
-//   1. price > MA Fast    2. price > MA Slow    3. MA Fast > MA Slow    4. RSI > 50
+// ── Per-timeframe weighted score + gauge + signal pipeline ──
+// Continuous -100..100 score (smoother & less noisy than a hard AND of booleans):
+//   30%  price vs MA-slow, normalized by ATR (trend context)
+//   30%  MA-fast vs MA-slow separation, normalized by ATR (cross strength)
+//   25%  RSI distance from 50, capped near overbought/oversold extremes
+//   15%  MA-fast slope over 5 bars, normalized by ATR (momentum)
+// Score is dampened when ATR is well below its own recent average (quiet/choppy market).
 function computeIndicators(tf){
-  if(tf.candles.length<Math.max(30,shared.settings.maSlow+1)) return;
+  if(tf.candles.length<Math.max(35,shared.settings.maSlow+5)) return;
   const closes=tf.candles.map(c=>c.c), highs=tf.candles.map(c=>c.h), lows=tf.candles.map(c=>c.l);
   const n=closes.length-1;
 
@@ -427,31 +505,50 @@ function computeIndicators(tf){
 
   tf.indValues={rsi,atr,maFast,maSlow};
 
-  const rsiV=rsi[n];
-  const atrV=atr[n];
-  const maFastV=maFast[n], maSlowV=maSlow[n];
-  const price=closes[n];
+  const rsiV=rsi[n], atrV=atr[n], maFastV=maFast[n], maSlowV=maSlow[n], price=closes[n];
+  const slopeLookback=5;
+  const maFastPrev=maFast[n-slopeLookback];
+  const maFastSlope=(maFastV!=null && maFastPrev!=null) ? maFastV-maFastPrev : null;
 
-  const priceAboveFast = maFastV!=null ? price>maFastV : null;
-  const priceAboveSlow = maSlowV!=null ? price>maSlowV : null;
-  const maCrossBull = (maFastV!=null && maSlowV!=null) ? maFastV>maSlowV : null;
-  const rsiBull = rsiV!=null ? rsiV>50 : null;
+  let atrSum=0, atrN=0;
+  for(let i=Math.max(0,n-20); i<=n; i++){ if(atr[i]!=null){ atrSum+=atr[i]; atrN++; } }
+  const atrAvg = atrN>0 ? atrSum/atrN : atrV;
+  const atrRatio = (atrV!=null && atrAvg) ? atrV/atrAvg : 1;
 
-  const checks = [priceAboveFast, priceAboveSlow, maCrossBull, rsiBull].filter(v=>v!==null);
-  const bulls = checks.filter(v=>v===true).length;
-  const bears = checks.filter(v=>v===false).length;
-  const finalScore = checks.length>0 ? ((bulls-bears)/checks.length)*100 : 0;
+  let score=0, weightSum=0;
+  const addComp=(value,weight)=>{ if(value==null) return; score+=value*weight; weightSum+=weight; };
+
+  if(maSlowV!=null && atrV) addComp(clamp(((price-maSlowV)/(atrV||1))*40,-100,100), 30);
+  if(maFastV!=null && maSlowV!=null && atrV) addComp(clamp(((maFastV-maSlowV)/(atrV||1))*40,-100,100), 30);
+  if(rsiV!=null){
+    let rsiScore=(rsiV-50)*2;
+    if(rsiV>75) rsiScore*=0.6;
+    if(rsiV<25) rsiScore*=0.6;
+    addComp(clamp(rsiScore,-100,100), 25);
+  }
+  if(maFastSlope!=null && atrV) addComp(clamp((maFastSlope/(atrV||1))*50,-100,100), 15);
+
+  let finalScore = weightSum>0 ? score/weightSum : 0;
+  let quiet=false;
+  if(atrRatio<0.6){ finalScore*=0.4; quiet=true; }
 
   let cls='NEUTRAL';
-  if(bulls===4) cls='STRONG BUY'; else if(bulls===3 && bears<=1) cls='BUY';
-  else if(bears===4) cls='STRONG SELL'; else if(bears===3 && bulls<=1) cls='SELL';
+  if(finalScore>=60) cls='STRONG BUY'; else if(finalScore>=25) cls='BUY';
+  else if(finalScore<=-60) cls='STRONG SELL'; else if(finalScore<=-25) cls='SELL';
 
   tf.lastScore=finalScore;
+  tf.quiet=quiet;
   drawGauge(tf,finalScore,cls);
-  updateChips(tf,rsiBull,rsiV,maCrossBull,priceAboveSlow,priceAboveFast);
+  updateChips(tf,rsiV,maFastV,maSlowV,price,quiet);
 
+  // Per-TF signal-card cooldown so the side panel doesn't spam on every candle
+  const nowT=Date.now();
+  const minGapMs=15000;
   if((cls==='STRONG BUY'||cls==='BUY'||cls==='STRONG SELL'||cls==='SELL') && cls!==tf.lastClass){
-    pushSignal(tf,cls,price,atrV);
+    if(!tf.lastSignalTime || (nowT-tf.lastSignalTime)>minGapMs){
+      pushSignal(tf,cls,price,atrV);
+      tf.lastSignalTime=nowT;
+    }
   }
   tf.lastClass=cls;
 
@@ -461,18 +558,22 @@ function computeIndicators(tf){
   updateConfluence();
 }
 
-function updateChips(tf,rsiBull,rsiV,maCrossBull,priceAboveSlow,priceAboveFast){
+function updateChips(tf,rsiV,maFastV,maSlowV,price,quiet){
   const setChip=(id,label,state)=>{ const el=document.getElementById(id); if(!el)return;
     el.className='chip '+(state==null?'neutral':state?'buy':'sell'); el.textContent=label; };
+  const rsiBull = rsiV!=null ? rsiV>50 : null;
+  const maCrossBull = (maFastV!=null && maSlowV!=null) ? maFastV>maSlowV : null;
+  const priceAboveSlow = maSlowV!=null ? price>maSlowV : null;
+  const priceAboveFast = maFastV!=null ? price>maFastV : null;
   setChip(`chipRsi_${tf.key}`, rsiV!=null?`RSI ${rsiV.toFixed(0)}`:'RSI', rsiBull);
   setChip(`chipMaCross_${tf.key}`, 'MA X', maCrossBull);
-  setChip(`chipPrice_${tf.key}`, 'PRICE', priceAboveSlow);
+  setChip(`chipPrice_${tf.key}`, quiet?'QUIET':'PRICE', quiet?null:priceAboveSlow);
   setChip(`chipTrend_${tf.key}`, 'TREND', priceAboveFast);
 }
 
 function pushSignal(tf,cls,price,atr){
   const isBuy=cls.includes('BUY');
-  const atrVal = atr||price*0.01;
+  const atrVal=atr||price*0.01;
   const sig={
     type:isBuy?'buy':'sell', strength:cls, time:Date.now(), entry:price,
     sl: isBuy?price-Math.max(shared.settings.stopLoss,atrVal*1.2):price+Math.max(shared.settings.stopLoss,atrVal*1.2),
@@ -498,82 +599,206 @@ function renderSignals(tf){
     </div>`).join('');
 }
 
-// ── Confluence + EA trade logic ─────────────────────────────
+// ── Triple-screen confluence engine (H4 bias → M15 setup → M5 trigger) ──
 function classBucket(cls){ if(cls.includes('BUY')) return 'buy'; if(cls.includes('SELL')) return 'sell'; return 'neutral'; }
+function biasFromScore(score,threshold){ if(score>threshold) return 'buy'; if(score<-threshold) return 'sell'; return null; }
+
+function updateTracker(bias,setupAligned,triggerAligned){
+  const set=(id,state,label)=>{ const el=document.getElementById(id); if(!el) return; el.className='tracker-step '+state; el.querySelector('.tracker-state').textContent=label; };
+  set('trackerBias', bias?bias:'pending', bias?bias.toUpperCase():'WAIT');
+  set('trackerSetup', !bias?'pending':(setupAligned?bias:'pending'), setupAligned?'ALIGNED':'WAIT');
+  set('trackerTrigger', !setupAligned?'pending':(triggerAligned?bias:'pending'), triggerAligned?'FIRE':'WAIT');
+}
 
 function updateConfluence(){
-  document.getElementById('h1ClassTag').textContent = tfH1.lastClass;
-  document.getElementById('m5ClassTag').textContent = tfM5.lastClass;
+  // Wait until all three timeframes have completed at least one indicator pass —
+  // judging confluence on partial data was the root cause of missing trades before.
+  if(!TFS.every(tf=>tf.indValues)) return;
+
+  document.getElementById('h4ClassTag').textContent = tfH4.lastClass + (tfH4.quiet?' (quiet)':'');
   document.getElementById('m15ClassTag').textContent = tfM15.lastClass;
+  document.getElementById('m5ClassTag').textContent = tfM5.lastClass;
 
-  const buckets = TFS.map(tf=>classBucket(tf.lastClass));
-  const buyCount = buckets.filter(b=>b==='buy').length;
-  const sellCount = buckets.filter(b=>b==='sell').length;
-  const anyStrongBuy = TFS.some(tf=>tf.lastClass==='STRONG BUY');
-  const anyStrongSell = TFS.some(tf=>tf.lastClass==='STRONG SELL');
+  const BIAS_THRESH=20, SETUP_THRESH=15, TRIGGER_THRESH=10;
+  const bias = biasFromScore(tfH4.lastScore, BIAS_THRESH);          // H4: the trend tide
+  const setupDir = biasFromScore(tfM15.lastScore, SETUP_THRESH);    // M15: the setup
+  const triggerDir = biasFromScore(tfM5.lastScore, TRIGGER_THRESH); // M5: the trigger
 
+  const setupAligned = !!bias && setupDir===bias;
+  const triggerAligned = !!bias && setupAligned && triggerDir===bias;
+  updateTracker(bias,setupAligned,triggerAligned);
+
+  // Overall composite badge (weighted average, H4 counts most — informational only)
+  const weighted = (tfH4.lastScore*1.5 + tfM15.lastScore*1.0 + tfM5.lastScore*0.8) / 3.3;
   let conf='NEUTRAL', badgeCls='neutral';
-  if(buyCount===3){ conf = anyStrongBuy ? 'STRONG BUY' : 'BUY'; badgeCls='buy'; }
-  else if(sellCount===3){ conf = anyStrongSell ? 'STRONG SELL' : 'SELL'; badgeCls='sell'; }
-  else if(buyCount>=2 && sellCount===0){ conf='BUY'; badgeCls='buy'; }
-  else if(sellCount>=2 && buyCount===0){ conf='SELL'; badgeCls='sell'; }
-  else if(buyCount>0 && sellCount>0){ conf='MIXED'; badgeCls='mixed'; }
-  else { conf='NEUTRAL'; badgeCls='neutral'; }
+  if(weighted>=45) { conf='STRONG BUY'; badgeCls='buy'; }
+  else if(weighted>=20 || (bias==='buy'&&setupAligned)) { conf='BUY'; badgeCls='buy'; }
+  else if(weighted<=-45) { conf='STRONG SELL'; badgeCls='sell'; }
+  else if(weighted<=-20 || (bias==='sell'&&setupAligned)) { conf='SELL'; badgeCls='sell'; }
 
   const badge=document.getElementById('confluenceBadge');
   badge.textContent=conf; badge.className='confluence-badge '+badgeCls;
-
-  if((badgeCls==='buy'||badgeCls==='sell') && conf!==shared.lastConfluence && shared.eaActive){
-    openConfluenceTrade(conf,badgeCls);
-  }
   shared.lastConfluence=conf;
+
+  checkDailyReset();
+
+  // Edge-triggered entry: fire only the moment M5 newly aligns with an already-
+  // confirmed H4+M15 bias — not on every tick it continues to agree. This avoids
+  // re-entering the same trend over and over.
+  const prevDir=shared.m5AlignedDirection;
+  const justTriggered = triggerAligned && prevDir!==bias;
+  shared.m5AlignedDirection = triggerAligned ? bias : null;
+
+  if(justTriggered && shared.eaActive && !shared.dailyLossBreaker){
+    const cooldownOk = (Date.now()-shared.lastTradeTime) > shared.settings.cooldownSec*1000;
+    if(cooldownOk){
+      openConfluenceTrade(bias==='buy'?'BUY':'SELL', bias);
+    }
+  }
 }
 
-function openConfluenceTrade(conf,dir){
+function openConfluenceTrade(label,dir){
   const openTrades=shared.trades.filter(t=>t.status==='open');
   if(openTrades.length>=shared.settings.maxTrades) return;
-  const price=shared.currentPrice || tfH1.candles.at(-1)?.c;
+
+  const fallbackTF = TFS.find(tf=>tf.candles.length) || tfH4;
+  const price = shared.currentPrice || fallbackTF.candles.at(-1)?.c;
   if(!price) return;
-  const atrVal = (tfH1.indValues && tfH1.indValues.atr[tfH1.candles.length-1]) || price*0.01;
+  const atrTF = TFS.find(tf=>tf.indValues) || fallbackTF;
+  const atrVal = (atrTF.indValues && atrTF.indValues.atr[atrTF.candles.length-1]) || price*0.01;
+
   const isBuy = dir==='buy';
-  const sl = isBuy ? price-Math.max(shared.settings.stopLoss,atrVal*1.2) : price+Math.max(shared.settings.stopLoss,atrVal*1.2);
-  const tp = isBuy ? price+Math.max(shared.settings.takeProfit,atrVal*2.4) : price-Math.max(shared.settings.takeProfit,atrVal*2.4);
-  shared.trades.unshift({ id:Date.now(), type:dir, strength:conf, entry:price, sl, tp, time:Date.now(), status:'open', lot:shared.settings.lotSize });
+  const slDist = Math.max(shared.settings.stopLoss, atrVal*1.2);
+  const tp2Dist = Math.max(shared.settings.takeProfit, atrVal*2.4);
+  const tp1Dist = slDist*shared.settings.tp1RMultiple;
+
+  const sl = isBuy? price-slDist : price+slDist;
+  const tp1 = isBuy? price+tp1Dist : price-tp1Dist;
+  const tp2 = isBuy? price+tp2Dist : price-tp2Dist;
+
+  let lot = shared.settings.lotSize;
+  if(shared.settings.riskMode==='risk'){
+    const riskAmount = shared.settings.balance*(shared.settings.riskPercent/100);
+    const computed = slDist>0 ? riskAmount/slDist : shared.settings.lotSize;
+    lot = (isFinite(computed) && computed>0) ? +computed.toFixed(3) : shared.settings.lotSize;
+  }
+
+  const trade={
+    id:Date.now()+Math.random(), type:dir, strength:label, entry:price,
+    initialSL:sl, sl, tp1, tp2, riskDistance:slDist,
+    lot, initialLot:lot, remainingLot:lot, partialClosed:false,
+    time:Date.now(), status:'open', pnl:0, realizedPnl:0
+  };
+  shared.trades.unshift(trade);
   if(shared.trades.length>30) shared.trades.pop();
+  shared.lastTradeTime=Date.now();
   renderTrades();
-  showToast(dir, `EA opened ${conf} @ ${fmt(price)}`);
+  playBeep(isBuy?880:440);
+  showToast(dir, `EA opened ${label} @ ${fmt(price)} · lot ${lot} · H4→M15→M5 confirmed @ ${nowClock()}`);
+}
+
+function closeTradeFull(t,price){
+  const isBuy=t.type==='buy';
+  const finalLegPnl=(isBuy?(price-t.entry):(t.entry-price))*t.remainingLot;
+  t.pnl = t.realizedPnl+finalLegPnl;
+  t.status='closed'; t.exit=price;
+  t.rMultiple = (t.riskDistance>0 && t.initialLot>0) ? (t.pnl/(t.riskDistance*t.initialLot)) : 0;
+
+  shared.stats.trades++;
+  if(t.pnl>=0) shared.stats.wins++; else shared.stats.losses++;
+  shared.stats.totalR += t.rMultiple;
+  shared.dailyPnL += t.pnl;
+  checkDailyBreaker();
+  updateStatsUI();
+  showToast(t.pnl>=0?'buy':'sell', `${t.strength} closed @ ${fmt(price)} (${t.pnl>=0?'+':''}${t.pnl.toFixed(2)}, ${t.rMultiple>=0?'+':''}${t.rMultiple.toFixed(2)}R)`);
 }
 
 function updateOpenTrades(){
+  const price=shared.currentPrice;
+  if(!price) return;
   let changed=false;
+
   shared.trades.forEach(t=>{
     if(t.status!=='open') return;
-    const price=shared.currentPrice;
-    if(!price) return;
-    if(t.type==='buy'){
-      if(price<=t.sl){ t.status='closed'; t.exit=price; t.pnl=(t.exit-t.entry)*t.lot; changed=true; showToast('sell',`Trade closed SL @ ${fmt(price)}`); }
-      else if(price>=t.tp){ t.status='closed'; t.exit=price; t.pnl=(t.exit-t.entry)*t.lot; changed=true; showToast('buy',`Trade closed TP @ ${fmt(price)}`); }
+    const isBuy=t.type==='buy';
+
+    if(!t.partialClosed){
+      const hitTP1 = isBuy? price>=t.tp1 : price<=t.tp1;
+      const hitSL = isBuy? price<=t.sl : price>=t.sl;
+      if(hitTP1){
+        const closeLot=t.remainingLot/2;
+        const partialPnl=(isBuy?(price-t.entry):(t.entry-price))*closeLot;
+        t.realizedPnl+=partialPnl;
+        t.remainingLot-=closeLot;
+        t.partialClosed=true;
+        t.sl=t.entry; // move stop to breakeven after partial
+        changed=true;
+        showToast(t.type, `${t.strength} partial close @ ${fmt(price)} (+${partialPnl.toFixed(2)}) · SL→breakeven`);
+      } else if(hitSL){
+        closeTradeFull(t,price); changed=true;
+      }
     } else {
-      if(price>=t.sl){ t.status='closed'; t.exit=price; t.pnl=(t.entry-t.exit)*t.lot; changed=true; showToast('sell',`Trade closed SL @ ${fmt(price)}`); }
-      else if(price<=t.tp){ t.status='closed'; t.exit=price; t.pnl=(t.entry-t.exit)*t.lot; changed=true; showToast('buy',`Trade closed TP @ ${fmt(price)}`); }
+      const atrTF = TFS.find(tf=>tf.indValues) || tfH4;
+      const atrVal=(atrTF.indValues && atrTF.indValues.atr[atrTF.candles.length-1]) || (t.riskDistance/1.2);
+      const trailDist=atrVal*shared.settings.trailMultiplier;
+      if(isBuy){ const newSl=price-trailDist; if(newSl>t.sl) t.sl=newSl; }
+      else { const newSl=price+trailDist; if(newSl<t.sl) t.sl=newSl; }
+
+      const hitSL = isBuy? price<=t.sl : price>=t.sl;
+      const hitTP2 = isBuy? price>=t.tp2 : price<=t.tp2;
+      if(hitSL || hitTP2){ closeTradeFull(t,price); changed=true; }
     }
   });
+
   if(changed) renderTrades();
 }
 
 function renderTrades(){
   const el=document.getElementById('tradeLog');
-  if(shared.trades.length===0){ el.innerHTML='<div class="empty-msg">No EA trades yet — waiting for timeframe agreement</div>'; return; }
+  if(shared.trades.length===0){ el.innerHTML='<div class="empty-msg">No EA trades yet — waiting for H4→M15→M5 confirmation</div>'; return; }
   el.innerHTML=shared.trades.map(t=>{
-    const pnl = t.status==='open' ? (t.type==='buy'?(shared.currentPrice-t.entry):(t.entry-shared.currentPrice))*t.lot : t.pnl;
+    let pnl, statusLabel;
+    if(t.status==='open'){
+      const live=(t.type==='buy'?(shared.currentPrice-t.entry):(t.entry-shared.currentPrice))*t.remainingLot;
+      pnl=t.realizedPnl+live;
+      statusLabel = t.partialClosed? 'TRAILING' : 'OPEN';
+    } else {
+      pnl=t.pnl;
+      statusLabel = 'CLOSED · '+(t.rMultiple>=0?'+':'')+t.rMultiple.toFixed(2)+'R';
+    }
     return `<div class="trade-row">
       <div class="trade-icon ${t.type}">${t.type==='buy'?'▲':'▼'}</div>
       <span class="trade-tag">${t.strength}</span>
-      <span class="trade-price">${fmt(t.entry)} ${t.status==='open'?'· OPEN':'· CLOSED'} · ${timeAgo(t.time)}</span>
+      <span class="trade-price">${fmt(t.entry)} · lot ${t.lot} · ${statusLabel} · ${timeAgo(t.time)}</span>
       <span class="trade-pnl ${pnl>=0?'positive':'negative'}">${pnl>=0?'+':''}${pnl.toFixed(2)}</span>
-      <span></span>
     </div>`;
   }).join('');
+}
+
+// ── Session stats + daily loss circuit breaker ──────────────
+function updateStatsUI(){
+  const s=shared.stats;
+  const winPct = s.trades>0 ? (s.wins/s.trades*100) : 0;
+  document.getElementById('statTrades').textContent=s.trades;
+  document.getElementById('statWinRate').textContent=winPct.toFixed(0)+'%';
+  document.getElementById('statNetR').textContent=(s.totalR>=0?'+':'')+s.totalR.toFixed(2)+'R';
+  const dEl=document.getElementById('statDailyPnl');
+  dEl.textContent=(shared.dailyPnL>=0?'+':'')+shared.dailyPnL.toFixed(2);
+  dEl.style.color = shared.dailyPnL>=0 ? 'var(--accent-green)' : 'var(--accent-red)';
+  const bEl=document.getElementById('statBreaker');
+  bEl.textContent = shared.dailyLossBreaker ? 'PAUSED' : 'ACTIVE';
+  bEl.style.color = shared.dailyLossBreaker ? 'var(--accent-red)' : 'var(--accent-green)';
+}
+function checkDailyReset(){
+  const today=new Date().toDateString();
+  if(shared.dailyDate!==today){ shared.dailyDate=today; shared.dailyPnL=0; shared.dailyLossBreaker=false; updateStatsUI(); }
+}
+function checkDailyBreaker(){
+  const maxLoss=shared.settings.balance*(shared.settings.maxDailyLossPercent/100);
+  if(shared.dailyPnL<=-maxLoss && !shared.dailyLossBreaker){
+    shared.dailyLossBreaker=true;
+    showToast('info','Daily loss limit hit — EA paused for the rest of today');
+  }
 }
 
 // ── Rendering: gauge ─────────────────────────────────────────
@@ -652,7 +877,7 @@ function drawMainChart(tf){
   });
 
   if(tf.indicators.showMA && iv){
-    [['maFast','var(--ma-fast-resolved)','#ff4757'],['maSlow','var(--ma-slow-resolved)','#f5f7fa']].forEach(([key,_,color])=>{
+    [['maFast','#ff4757'],['maSlow','#f5f7fa']].forEach(([key,color])=>{
       ctx.strokeStyle=color; ctx.lineWidth=1.6; ctx.beginPath(); let started=false;
       data.forEach((c,i)=>{ const gi=idxOffset+i; const v=iv[key][gi]; if(v==null) return; const x=i*cw+cw/2, y=priceToY(v); if(!started){ ctx.moveTo(x,y); started=true; } else ctx.lineTo(x,y); });
       ctx.stroke();
@@ -879,15 +1104,29 @@ document.getElementById('eaToggle').addEventListener('click',()=>{
   showToast('info', shared.eaActive?'EA activated':'EA paused');
 });
 
+document.getElementById('soundToggle').addEventListener('click',()=>{
+  shared.settings.soundEnabled=!shared.settings.soundEnabled;
+  document.getElementById('soundIcon').textContent = shared.settings.soundEnabled?'🔊':'🔇';
+  document.getElementById('soundToggle').classList.toggle('active',shared.settings.soundEnabled);
+  if(shared.settings.soundEnabled) playBeep(660);
+});
+
 document.getElementById('connBadge').addEventListener('click',()=>{
   if(!shared.wsConnected){ shared.isSandboxed=false; shared.reconnectAttempts=0; shared.reconnectDelay=2000; connectWebSocket(); }
 });
 
 document.getElementById('applySettings').addEventListener('click',()=>{
+  shared.settings.riskMode=document.getElementById('riskMode').value;
   shared.settings.lotSize=parseFloat(document.getElementById('lotSize').value)||0.1;
+  shared.settings.maxTrades=parseInt(document.getElementById('maxTrades').value)||3;
+  shared.settings.balance=parseFloat(document.getElementById('balance').value)||1000;
+  shared.settings.riskPercent=parseFloat(document.getElementById('riskPercent').value)||1;
+  shared.settings.maxDailyLossPercent=parseFloat(document.getElementById('maxDailyLoss').value)||5;
   shared.settings.stopLoss=parseFloat(document.getElementById('stopLoss').value)||200;
   shared.settings.takeProfit=parseFloat(document.getElementById('takeProfit').value)||400;
-  shared.settings.maxTrades=parseInt(document.getElementById('maxTrades').value)||3;
+  shared.settings.tp1RMultiple=parseFloat(document.getElementById('tp1RMultiple').value)||1;
+  shared.settings.trailMultiplier=parseFloat(document.getElementById('trailMultiplier').value)||1.5;
+  shared.settings.cooldownSec=parseInt(document.getElementById('cooldownSec').value)||60;
   shared.settings.maFast=parseInt(document.getElementById('maFast').value)||20;
   shared.settings.maSlow=parseInt(document.getElementById('maSlow').value)||50;
   TFS.forEach(tf=>{ computeIndicators(tf); drawAllCharts(tf); });
@@ -897,6 +1136,7 @@ document.getElementById('applySettings').addEventListener('click',()=>{
 window.addEventListener('resize',()=>{ TFS.forEach(tf=>{ if(tf.dataReady) drawAllCharts(tf); }); });
 
 // ── Boot ────────────────────────────────────────────────────
+updateStatsUI();
 connectWebSocket();
 startTickTimer();
 </script>
