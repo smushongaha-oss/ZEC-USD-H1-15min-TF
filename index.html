@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>V75 H4 / M15 / M5 Live Dashboard — Triple-Screen Confluence EA</title>
+<title>V10 H4 / M15 / M5 Live Dashboard — Triple-Screen Confluence EA</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -185,11 +185,11 @@
   <header class="header">
     <div class="header-left">
       <div class="logo">
-        <div class="logo-icon">V75</div>
-        <div class="logo-text"><span>V75</span> EA</div>
+        <div class="logo-icon">V10</div>
+        <div class="logo-text"><span>V10</span> EA</div>
       </div>
       <div class="pair-info">
-        <span class="pair-name">Volatility 75</span>
+        <span class="pair-name">Volatility 10</span>
         <span class="pair-tag">Synthetic · 2s Tick</span>
         <span class="pair-price" id="currentPrice">...</span>
         <span class="pair-change up" id="priceChange">0.00%</span>
@@ -374,18 +374,18 @@
 
 <script>
 // ============================================================
-// VOLATILITY 75 INDEX TRIPLE-SCREEN (H4 bias → M15 setup → M5 trigger)
+// VOLATILITY 10 INDEX TRIPLE-SCREEN (H4 bias → M15 setup → M5 trigger)
 // Data source: Deriv WebSocket API — native 2s tick cadence
 // Indicators: MA Fast/Slow cross + ATR(14)/RSI(14) + weighted momentum score
 // Trade engine: risk-% or fixed lot sizing, partial TP1 + ATR trailing stop,
 // per-trade R-multiple tracking, cooldown + daily loss circuit breaker.
 // ============================================================
 
-const SYMBOL = 'R_75';
+const SYMBOL = 'R_10';
 const LIMIT = 200;
 const VISIBLE_CANDLES = 70;
 const WS_URL = 'wss://ws.binaryws.com/websockets/v3?app_id=1089';
-const TICK_INTERVAL = 2; // seconds — V75's native tick cadence (UI countdown only)
+const TICK_INTERVAL = 2; // seconds — V10's native tick cadence (UI countdown only)
 const CONNECT_TIMEOUT_MS = 9000;
 
 const shared = {
@@ -487,12 +487,6 @@ function computeATR(highs,lows,closes,period){
 }
 
 // ── Per-timeframe weighted score + gauge + signal pipeline ──
-// Continuous -100..100 score (smoother & less noisy than a hard AND of booleans):
-//   30%  price vs MA-slow, normalized by ATR (trend context)
-//   30%  MA-fast vs MA-slow separation, normalized by ATR (cross strength)
-//   25%  RSI distance from 50, capped near overbought/oversold extremes
-//   15%  MA-fast slope over 5 bars, normalized by ATR (momentum)
-// Score is dampened when ATR is well below its own recent average (quiet/choppy market).
 function computeIndicators(tf){
   if(tf.candles.length<Math.max(35,shared.settings.maSlow+5)) return;
   const closes=tf.candles.map(c=>c.c), highs=tf.candles.map(c=>c.h), lows=tf.candles.map(c=>c.l);
@@ -541,7 +535,6 @@ function computeIndicators(tf){
   drawGauge(tf,finalScore,cls);
   updateChips(tf,rsiV,maFastV,maSlowV,price,quiet);
 
-  // Per-TF signal-card cooldown so the side panel doesn't spam on every candle
   const nowT=Date.now();
   const minGapMs=15000;
   if((cls==='STRONG BUY'||cls==='BUY'||cls==='STRONG SELL'||cls==='SELL') && cls!==tf.lastClass){
@@ -611,8 +604,6 @@ function updateTracker(bias,setupAligned,triggerAligned){
 }
 
 function updateConfluence(){
-  // Wait until all three timeframes have completed at least one indicator pass —
-  // judging confluence on partial data was the root cause of missing trades before.
   if(!TFS.every(tf=>tf.indValues)) return;
 
   document.getElementById('h4ClassTag').textContent = tfH4.lastClass + (tfH4.quiet?' (quiet)':'');
@@ -620,15 +611,14 @@ function updateConfluence(){
   document.getElementById('m5ClassTag').textContent = tfM5.lastClass;
 
   const BIAS_THRESH=20, SETUP_THRESH=15, TRIGGER_THRESH=10;
-  const bias = biasFromScore(tfH4.lastScore, BIAS_THRESH);          // H4: the trend tide
-  const setupDir = biasFromScore(tfM15.lastScore, SETUP_THRESH);    // M15: the setup
-  const triggerDir = biasFromScore(tfM5.lastScore, TRIGGER_THRESH); // M5: the trigger
+  const bias = biasFromScore(tfH4.lastScore, BIAS_THRESH);
+  const setupDir = biasFromScore(tfM15.lastScore, SETUP_THRESH);
+  const triggerDir = biasFromScore(tfM5.lastScore, TRIGGER_THRESH);
 
   const setupAligned = !!bias && setupDir===bias;
   const triggerAligned = !!bias && setupAligned && triggerDir===bias;
   updateTracker(bias,setupAligned,triggerAligned);
 
-  // Overall composite badge (weighted average, H4 counts most — informational only)
   const weighted = (tfH4.lastScore*1.5 + tfM15.lastScore*1.0 + tfM5.lastScore*0.8) / 3.3;
   let conf='NEUTRAL', badgeCls='neutral';
   if(weighted>=45) { conf='STRONG BUY'; badgeCls='buy'; }
@@ -642,9 +632,6 @@ function updateConfluence(){
 
   checkDailyReset();
 
-  // Edge-triggered entry: fire only the moment M5 newly aligns with an already-
-  // confirmed H4+M15 bias — not on every tick it continues to agree. This avoids
-  // re-entering the same trend over and over.
   const prevDir=shared.m5AlignedDirection;
   const justTriggered = triggerAligned && prevDir!==bias;
   shared.m5AlignedDirection = triggerAligned ? bias : null;
@@ -731,7 +718,7 @@ function updateOpenTrades(){
         t.realizedPnl+=partialPnl;
         t.remainingLot-=closeLot;
         t.partialClosed=true;
-        t.sl=t.entry; // move stop to breakeven after partial
+        t.sl=t.entry;
         changed=true;
         showToast(t.type, `${t.strength} partial close @ ${fmt(price)} (+${partialPnl.toFixed(2)}) · SL→breakeven`);
       } else if(hitSL){
@@ -959,7 +946,7 @@ function updateHeader(){
   document.getElementById('vol24h').textContent = fmtCompact(shared.tickCount);
 }
 
-// ── Tick countdown UI (V75 ticks ~every 2s) ─────────────────
+// ── Tick countdown UI (V10 ticks ~every 2s) ─────────────────
 function startTickTimer(){
   clearInterval(shared.tickTimerInterval);
   shared.tickTimerInterval=setInterval(()=>{
