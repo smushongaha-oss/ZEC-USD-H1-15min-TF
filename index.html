@@ -1,422 +1,503 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Accumulator Signal — Deriv Volatility Indices</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  :root{
-    --bg:#0a0d12;
-    --panel:#12161f;
-    --panel2:#171c27;
-    --line:#242b3a;
-    --text:#e7ebf2;
-    --dim:#7c8699;
-    --safe:#00d9a3;
-    --safe-dim:#0a3d33;
-    --caution:#ffb340;
-    --caution-dim:#3d2f0a;
-    --risk:#ff4d5e;
-    --risk-dim:#3d0f16;
-    --accent:#4d9eff;
-    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
-    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; background:var(--bg); color:var(--text);
-    font-family:var(--sans); padding:16px; min-height:100vh;
-  }
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V75 Trend Scanner & Sniper Engine</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0b0f19;
+      color: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 12px;
+      box-sizing: border-box;
+    }
 
-  .wrap{max-width:920px; margin:0 auto;}
-  header{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;}
-  h1{font-size:17px; font-weight:600; margin:0; letter-spacing:.2px;}
-  h1 span{color:var(--dim); font-weight:400;}
-  .status{display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; color:var(--dim);}
-  .dot{width:8px; height:8px; border-radius:50%; background:var(--dim);}
-  .dot.on{background:var(--safe); box-shadow:0 0 6px var(--safe);}
-  .dot.off{background:var(--risk);}
+    .app-card {
+      background-color: #121826;
+      border: 1px solid #1f293d;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+    }
 
-  .controls{
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-    gap:10px; background:var(--panel); border:1px solid var(--line);
-    border-radius:10px; padding:12px; margin-bottom:14px;
-  }
-  .field label{display:block; font-size:11px; color:var(--dim); margin-bottom:4px; text-transform:uppercase; letter-spacing:.5px;}
-  select, input{
-    width:100%; background:var(--panel2); border:1px solid var(--line); color:var(--text);
-    padding:8px 9px; border-radius:7px; font-family:var(--mono); font-size:13px;
-  }
-  button{
-    font-family:var(--sans); font-weight:600; font-size:13px; border:none;
-    border-radius:7px; padding:9px 12px; cursor:pointer; transition:opacity .15s;
-  }
-  button:hover{opacity:.85;}
-  #trackBtn{background:var(--safe); color:#04241c;}
-  #trackBtn.stop{background:var(--risk); color:#2a0006;}
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
 
-  .signal-panel{
-    border-radius:12px; padding:22px; margin-bottom:14px; border:1px solid var(--line);
-    transition:background .3s, border-color .3s;
-    background:var(--panel);
-  }
-  .signal-panel.safe{background:linear-gradient(135deg,var(--safe-dim),var(--panel)); border-color:var(--safe);}
-  .signal-panel.caution{background:linear-gradient(135deg,var(--caution-dim),var(--panel)); border-color:var(--caution);}
-  .signal-panel.risk{background:linear-gradient(135deg,var(--risk-dim),var(--panel)); border-color:var(--risk); animation:pulse 1.1s infinite;}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,77,94,.35);}50%{box-shadow:0 0 0 8px rgba(255,77,94,0);}}
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-  .sig-top{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:8px;}
-  .sig-label{font-size:22px; font-weight:700; letter-spacing:.3px;}
-  .sig-label.safe{color:var(--safe);}
-  .sig-label.caution{color:var(--caution);}
-  .sig-label.risk{color:var(--risk);}
-  .sig-price{font-family:var(--mono); font-size:22px; font-weight:600;}
-  .sig-reason{margin-top:8px; font-size:13px; color:var(--dim); line-height:1.5;}
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+      animation: blink 1s infinite alternate;
+    }
 
-  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px;}
-  @media(max-width:600px){.grid2{grid-template-columns:1fr;}}
+    .live-dot.offline {
+      background-color: #ef4444;
+      box-shadow: 0 0 8px #ef4444;
+      animation: none;
+    }
 
-  .card{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px;}
-  .card h3{margin:0 0 10px 0; font-size:12px; text-transform:uppercase; letter-spacing:.6px; color:var(--dim); font-weight:600;}
-  .metric-row{display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--line); font-size:13px;}
-  .metric-row:last-child{border-bottom:none;}
-  .metric-row .v{font-family:var(--mono); font-weight:600;}
+    @keyframes blink {
+      0% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
 
-  .gauge-track{height:8px; background:var(--panel2); border-radius:5px; overflow:hidden; margin-top:6px;}
-  .gauge-fill{height:100%; border-radius:5px; transition:width .25s, background .25s;}
+    .header-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
 
-  canvas#spark{width:100%; height:60px; display:block;}
+    .header-badge {
+      background-color: #1e293b;
+      color: #38bdf8;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
 
-  table{width:100%; border-collapse:collapse; font-size:13px;}
-  th{text-align:left; color:var(--dim); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.4px; padding:6px 8px; border-bottom:1px solid var(--line);}
-  td{padding:7px 8px; border-bottom:1px solid var(--line); font-family:var(--mono);}
-  tr:last-child td{border-bottom:none;}
-  .pill{display:inline-block; width:8px; height:8px; border-radius:50%;}
-  .pill.safe{background:var(--safe);} .pill.caution{background:var(--caution);} .pill.risk{background:var(--risk);}
+    /* Price Card */
+    .price-card {
+      background-color: #1a2234;
+      border: 1px solid #28354d;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
 
-  .note{font-size:11px; color:var(--dim); line-height:1.5; margin-top:4px;}
-  .track-info{display:none;}
-  .track-info.active{display:block;}
-</style>
+    .price-label {
+      font-size: 0.7rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .price-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: monospace;
+    }
+
+    /* Signal Panel */
+    .signal-panel {
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 14px;
+      text-align: center;
+      background-color: #1a2234;
+      border: 1px solid #28354d;
+      transition: all 0.3s ease;
+    }
+
+    .signal-status-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      color: #64748b;
+    }
+
+    .signal-direction {
+      font-size: 1.5rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+      color: #64748b;
+    }
+
+    .signal-desc {
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    /* Signal States */
+    .signal-panel.SNIPER_BUY {
+      background-color: rgba(34, 197, 94, 0.12);
+      border: 2px solid #22c55e;
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+    }
+    .signal-panel.SNIPER_BUY .signal-direction { color: #22c55e; }
+    .signal-panel.SNIPER_BUY .signal-status-tag { color: #22c55e; }
+
+    .signal-panel.SNIPER_SELL {
+      background-color: rgba(239, 68, 68, 0.12);
+      border: 2px solid #ef4444;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+    }
+    .signal-panel.SNIPER_SELL .signal-direction { color: #ef4444; }
+    .signal-panel.SNIPER_SELL .signal-status-tag { color: #ef4444; }
+
+    /* Target Levels Grid */
+    .levels-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .level-box {
+      background-color: #1a2234;
+      border: 1px solid #28354d;
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    .level-title {
+      font-size: 0.65rem;
+      font-weight: bold;
+      color: #64748b;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+    }
+
+    .level-val {
+      font-size: 0.82rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: #f8fafc;
+    }
+
+    .level-box.entry .level-val { color: #38bdf8; }
+    .level-box.tp .level-val { color: #22c55e; }
+    .level-box.sl .level-val { color: #ef4444; }
+
+    /* Market Structure Diagnostics */
+    .diag-container {
+      background-color: #161c2b;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.72rem;
+    }
+
+    .diag-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      color: #64748b;
+    }
+
+    .diag-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .diag-val {
+      font-weight: 600;
+      color: #cbd5e1;
+      font-family: monospace;
+    }
+
+    .trend-bull { color: #22c55e; }
+    .trend-bear { color: #ef4444; }
+    .trend-range { color: #eab308; }
+
+    .footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #475569;
+      margin-top: 12px;
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
 
-  <header>
-    <h1>Accumulator Signal <span>— entry / exit windows from live tick volatility</span></h1>
-    <div class="status"><span class="dot off" id="connDot"></span><span id="connText">connecting…</span></div>
-  </header>
-
-  <div class="controls">
-    <div class="field">
-      <label>Index</label>
-      <select id="symbolSel">
-        <option value="R_10">Volatility 10</option>
-        <option value="R_25">Volatility 25</option>
-        <option value="R_50">Volatility 50</option>
-        <option value="R_75">Volatility 75</option>
-        <option value="R_100">Volatility 100</option>
-        <option value="1HZ10V">Volatility 10 (1s)</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Growth rate</label>
-      <select id="growthSel">
-        <option value="1">1%</option>
-        <option value="2">2%</option>
-        <option value="3" selected>3%</option>
-        <option value="4">4%</option>
-        <option value="5">5%</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Stake (USD)</label>
-      <input id="stakeInput" type="number" value="2" min="1" step="0.5">
-    </div>
-    <div class="field" style="align-self:end;">
-      <button id="trackBtn">Start tracking position</button>
-    </div>
-  </div>
-
-  <div class="signal-panel safe" id="signalPanel">
-    <div class="sig-top">
-      <div class="sig-label safe" id="sigLabel">CONNECTING…</div>
-      <div class="sig-price" id="sigPrice">—</div>
-    </div>
-    <div class="sig-reason" id="sigReason">Waiting for live ticks on the selected index.</div>
-  </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h3>Volatility ratio (current vs baseline)</h3>
-      <div class="metric-row"><span>Ratio</span><span class="v" id="volRatio">—</span></div>
-      <div class="gauge-track"><div class="gauge-fill" id="volGauge" style="width:0%; background:var(--safe);"></div></div>
-      <div class="note">&lt;0.7 = contracting (favors entry) · 0.7–1.3 = normal · &gt;1.3 = expanding (favors exit/avoid)</div>
-      <div class="metric-row" style="margin-top:8px;"><span>Directional streak</span><span class="v" id="streak">0</span></div>
-      <div class="metric-row"><span>Last tick move</span><span class="v" id="lastMove">—</span></div>
-      <canvas id="spark"></canvas>
-    </div>
-
-    <div class="card">
-      <h3>Position tracker</h3>
-      <div id="trackIdle">
-        <div class="note">Press "Start tracking position" the moment you open the accumulator on Deriv — this mirrors it using live ticks so the exit signal above applies to your actual trade.</div>
+  <div class="app-card">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-left">
+        <div class="live-dot" id="live-dot"></div>
+        <div class="header-title">Volatility 75 Index</div>
       </div>
-      <div class="track-info" id="trackInfo">
-        <div class="metric-row"><span>Ticks held</span><span class="v" id="ticksHeld">0</span></div>
-        <div class="metric-row"><span>Time in trade</span><span class="v" id="timeHeld">0s</span></div>
-        <div class="metric-row"><span>Est. payout</span><span class="v" id="estPayout">—</span></div>
-        <div class="metric-row"><span>Est. profit</span><span class="v" id="estProfit">—</span></div>
-        <div class="note" id="trackNote"></div>
+      <div class="header-badge">SNIPER V2</div>
+    </div>
+
+    <!-- Live Market Price -->
+    <div class="price-card">
+      <div class="price-label">Live Market Price</div>
+      <div class="price-value" id="price-val">0.0000</div>
+    </div>
+
+    <!-- Signal Banner -->
+    <div class="signal-panel" id="signal-panel">
+      <div class="signal-status-tag" id="signal-tag">SCANNING MARKET</div>
+      <div class="signal-direction" id="signal-dir">ANALYZING...</div>
+      <div class="signal-desc" id="signal-desc">Scanning structural trend & momentum...</div>
+    </div>
+
+    <!-- Trade Execution Levels -->
+    <div class="levels-grid">
+      <div class="level-box entry">
+        <div class="level-title">Entry Price</div>
+        <div class="level-val" id="level-entry">---</div>
+      </div>
+      <div class="level-box tp">
+        <div class="level-title">Take Profit (1:2)</div>
+        <div class="level-val" id="level-tp">---</div>
+      </div>
+      <div class="level-box sl">
+        <div class="level-title">Stop Loss</div>
+        <div class="level-val" id="level-sl">---</div>
       </div>
     </div>
+
+    <!-- Market Analysis Metrics -->
+    <div class="diag-container">
+      <div class="diag-row">
+        <span>Macro Trend (EMA 200):</span>
+        <span class="diag-val" id="macro-trend">SCANNING...</span>
+      </div>
+      <div class="diag-row">
+        <span>RSI Momentum (14):</span>
+        <span class="diag-val" id="rsi-val">---</span>
+      </div>
+      <div class="diag-row">
+        <span>Pullback Distance:</span>
+        <span class="diag-val" id="pullback-val">---</span>
+      </div>
+    </div>
+
+    <div class="footer">Multi-Filter Trend & Pullback Engine</div>
   </div>
 
-  <div class="card">
-    <h3>Scanner — other indices</h3>
-    <table>
-      <thead><tr><th></th><th>Index</th><th>Last</th><th>Vol ratio</th><th>Read</th></tr></thead>
-      <tbody id="scanBody"></tbody>
-    </table>
-    <div class="note" style="margin-top:8px;">Barrier width is estimated from live tick dispersion, not Deriv's exact server-side barrier formula — use this as a timing guide, not a guaranteed breach probability.</div>
-  </div>
+  <script>
+    const APP_ID = '1089';
+    const SYMBOL = 'R_75';
+    const HISTORY_COUNT = 250; // Needs 250 ticks for clean 200 EMA trend detection
 
-</div>
+    let prices = [];
+    let ws;
+    let pingInterval;
+    let watchDogTimeout;
 
-<script>
-const SCAN_SYMBOLS = ["R_10","R_25","R_50","R_75","R_100"];
-const NAMES = {R_10:"Vol 10", R_25:"Vol 25", R_50:"Vol 50", R_75:"Vol 75", R_100:"Vol 100", "1HZ10V":"Vol 10 (1s)"};
+    function connectWebSocket() {
+      if (ws) ws.close();
 
-let ws;
-let mainSymbol = "R_10";
-const buffers = {}; // symbol -> {prices:[], returns:[]}
-const MAXLEN = 120, VOL_WIN = 20, BASE_WIN = 100;
+      ws = new WebSocket(`wss://ws.derivws.com/websockets/v3?app_id=${APP_ID}`);
 
-function ensureBuf(sym){
-  if(!buffers[sym]) buffers[sym] = {prices:[], returns:[], lastDir:0, streak:0};
-  return buffers[sym];
-}
+      ws.onopen = () => {
+        document.getElementById('live-dot').classList.remove('offline');
 
-function stdev(arr){
-  if(arr.length < 2) return 0;
-  const m = arr.reduce((a,b)=>a+b,0)/arr.length;
-  const v = arr.reduce((a,b)=>a+(b-m)*(b-m),0)/arr.length;
-  return Math.sqrt(v);
-}
+        // Request tick history
+        ws.send(JSON.stringify({
+          ticks_history: SYMBOL,
+          count: HISTORY_COUNT,
+          end: 'latest',
+          style: 'ticks'
+        }));
 
-function pushTick(sym, price){
-  const b = ensureBuf(sym);
-  if(b.prices.length){
-    const prev = b.prices[b.prices.length-1];
-    const ret = (price - prev) / prev;
-    b.returns.push(ret);
-    if(b.returns.length > MAXLEN) b.returns.shift();
-    const dir = ret > 0 ? 1 : (ret < 0 ? -1 : 0);
-    if(dir !== 0 && dir === b.lastDir) b.streak++; else if(dir !== 0){ b.streak = 1; b.lastDir = dir; }
-  }
-  b.prices.push(price);
-  if(b.prices.length > MAXLEN) b.prices.shift();
-}
+        // Subscribe to live tick stream
+        ws.send(JSON.stringify({
+          ticks: SYMBOL,
+          subscribe: 1
+        }));
 
-function volRatioFor(sym){
-  const b = buffers[sym];
-  if(!b || b.returns.length < 8) return null;
-  const recent = b.returns.slice(-VOL_WIN);
-  const base = b.returns.slice(-BASE_WIN);
-  const cur = stdev(recent);
-  const bas = stdev(base) || cur;
-  if(bas === 0) return 1;
-  return cur / bas;
-}
+        clearInterval(pingInterval);
+        pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ ping: 1 }));
+          }
+        }, 15000);
+      };
 
-function readFor(ratio){
-  if(ratio === null) return {cls:"caution", txt:"warming up"};
-  if(ratio > 1.35) return {cls:"risk", txt:"expanding"};
-  if(ratio > 1.15) return {cls:"caution", txt:"watch"};
-  if(ratio < 0.7) return {cls:"safe", txt:"contracting"};
-  return {cls:"safe", txt:"normal"};
-}
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        resetWatchDog();
 
-// ---- position tracker ----
-let tracking = false, trackStart = 0, trackTicks = 0, trackStake = 2, trackGrowth = 3;
+        if (data.msg_type === 'history') {
+          prices = data.history.prices.map(p => Number(p));
+          processSniperLogic();
+        }
 
-function fmt(n, d=3){ return n===null||n===undefined ? "—" : n.toFixed(d); }
+        if (data.msg_type === 'tick') {
+          prices.push(Number(data.tick.quote));
+          if (prices.length > HISTORY_COUNT) prices.shift();
+          processSniperLogic();
+        }
+      };
 
-function updateMainPanel(){
-  const b = buffers[mainSymbol];
-  const panel = document.getElementById('signalPanel');
-  const label = document.getElementById('sigLabel');
-  const reason = document.getElementById('sigReason');
-  const priceEl = document.getElementById('sigPrice');
+      ws.onclose = () => {
+        document.getElementById('live-dot').classList.add('offline');
+        setTimeout(connectWebSocket, 2000);
+      };
 
-  if(!b || b.prices.length === 0){
-    return;
-  }
-  priceEl.textContent = b.prices[b.prices.length-1].toFixed(b.prices[b.prices.length-1] > 1000 ? 2 : 3);
-
-  const ratio = volRatioFor(mainSymbol);
-  document.getElementById('volRatio').textContent = ratio===null ? "—" : ratio.toFixed(2)+"x";
-  const gauge = document.getElementById('volGauge');
-  const pct = ratio===null ? 10 : Math.min(100, (ratio/2)*100);
-  gauge.style.width = pct+"%";
-
-  const lastRet = b.returns.length ? b.returns[b.returns.length-1] : null;
-  document.getElementById('lastMove').textContent = lastRet===null ? "—" : (lastRet*100).toFixed(3)+"%";
-  document.getElementById('streak').textContent = b.streak + (b.lastDir>0?" up":b.lastDir<0?" down":"");
-
-  const read = readFor(ratio);
-  gauge.style.background = read.cls==="risk" ? "var(--risk)" : read.cls==="caution" ? "var(--caution)" : "var(--safe)";
-
-  panel.className = "signal-panel " + read.cls;
-  label.className = "sig-label " + read.cls;
-
-  const spikeFlag = lastRet !== null && b.returns.length > VOL_WIN &&
-    Math.abs(lastRet) > 2.5 * (stdev(b.returns.slice(-VOL_WIN)) || 1e-9);
-
-  if(read.cls === "risk" || spikeFlag){
-    label.textContent = tracking ? "EXIT NOW" : "AVOID ENTRY";
-    reason.textContent = spikeFlag
-      ? "A single tick just moved well beyond the recent range — breach risk is elevated right now."
-      : "Recent volatility (last "+VOL_WIN+" ticks) is running "+ratio.toFixed(2)+"x the baseline — barrier is effectively tighter relative to price swings.";
-  } else if(read.cls === "caution"){
-    label.textContent = tracking ? "HOLD — WATCH" : "MARGINAL";
-    reason.textContent = "Volatility is drifting above baseline ("+(ratio?ratio.toFixed(2):"—")+"x). Not a clean window either way — wait for it to settle before entering, or tighten your exit if already in.";
-  } else {
-    label.textContent = tracking ? "SAFE — HOLD" : "SAFE — ENTRY WINDOW";
-    reason.textContent = "Tick dispersion is calm relative to its recent baseline ("+(ratio?ratio.toFixed(2):"—")+"x). This is historically when accumulator barriers are least likely to be tested.";
-  }
-
-  drawSpark(b);
-  updateTracker();
-}
-
-function drawSpark(b){
-  const c = document.getElementById('spark');
-  const ctx = c.getContext('2d');
-  const w = c.width = c.clientWidth * devicePixelRatio;
-  const h = c.height = c.clientHeight * devicePixelRatio;
-  ctx.clearRect(0,0,w,h);
-  const rets = b.returns.slice(-60);
-  if(rets.length < 2) return;
-  const max = Math.max(...rets.map(Math.abs), 1e-9);
-  ctx.strokeStyle = "#4d9eff";
-  ctx.lineWidth = 1.5 * devicePixelRatio;
-  ctx.beginPath();
-  rets.forEach((r,i)=>{
-    const x = (i/(rets.length-1)) * w;
-    const y = h/2 - (r/max) * (h/2 - 4);
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  });
-  ctx.stroke();
-}
-
-function updateTracker(){
-  const idle = document.getElementById('trackIdle');
-  const info = document.getElementById('trackInfo');
-  if(!tracking){ idle.style.display='block'; info.classList.remove('active'); return; }
-  idle.style.display='none'; info.classList.add('active');
-
-  document.getElementById('ticksHeld').textContent = trackTicks;
-  const secs = Math.floor((Date.now()-trackStart)/1000);
-  document.getElementById('timeHeld').textContent = secs+"s";
-
-  const payout = trackStake * Math.pow(1 + trackGrowth/100, trackTicks);
-  const profit = payout - trackStake;
-  document.getElementById('estPayout').textContent = "$"+payout.toFixed(2);
-  document.getElementById('estProfit').textContent = (profit>=0?"+":"")+"$"+profit.toFixed(2);
-
-  const ratio = volRatioFor(mainSymbol);
-  const note = document.getElementById('trackNote');
-  if(ratio !== null && ratio > 1.35){
-    note.textContent = "Volatility just expanded — locking in "+profit.toFixed(2)+" now removes breach risk on the next few ticks.";
-  } else if(trackTicks > 150){
-    note.textContent = "150+ ticks held — compounding is strong, but every additional tick is another breach roll. Consider banking profit.";
-  } else {
-    note.textContent = "Conditions look normal — the signal above will flag when volatility expands.";
-  }
-}
-
-document.getElementById('trackBtn').addEventListener('click', ()=>{
-  tracking = !tracking;
-  const btn = document.getElementById('trackBtn');
-  if(tracking){
-    trackStart = Date.now();
-    trackTicks = 0;
-    trackStake = parseFloat(document.getElementById('stakeInput').value) || 2;
-    trackGrowth = parseFloat(document.getElementById('growthSel').value) || 3;
-    btn.textContent = "Stop tracking";
-    btn.classList.add('stop');
-  } else {
-    btn.textContent = "Start tracking position";
-    btn.classList.remove('stop');
-  }
-  updateTracker();
-});
-
-function updateScanner(){
-  const tbody = document.getElementById('scanBody');
-  tbody.innerHTML = "";
-  SCAN_SYMBOLS.forEach(sym=>{
-    const b = buffers[sym];
-    const ratio = volRatioFor(sym);
-    const read = readFor(ratio);
-    const last = b && b.prices.length ? b.prices[b.prices.length-1] : null;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td><span class="pill ${read.cls}"></span></td>
-      <td>${NAMES[sym]||sym}</td>
-      <td>${last===null?"—":last.toFixed(last>1000?2:3)}</td>
-      <td>${ratio===null?"—":ratio.toFixed(2)+"x"}</td>
-      <td>${read.txt}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-function subscribe(sym){
-  if(ws && ws.readyState === 1){
-    ws.send(JSON.stringify({ticks: sym, subscribe: 1}));
-  }
-}
-
-function connect(){
-  ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
-  ws.onopen = ()=>{
-    document.getElementById('connDot').className = 'dot on';
-    document.getElementById('connText').textContent = 'live';
-    subscribe(mainSymbol);
-    SCAN_SYMBOLS.forEach(s=>{ if(s!==mainSymbol) subscribe(s); });
-  };
-  ws.onclose = ()=>{
-    document.getElementById('connDot').className = 'dot off';
-    document.getElementById('connText').textContent = 'reconnecting…';
-    setTimeout(connect, 2000);
-  };
-  ws.onerror = ()=>{ ws.close(); };
-  ws.onmessage = (msg)=>{
-    const data = JSON.parse(msg.data);
-    if(data.msg_type === 'tick' && data.tick){
-      const sym = data.tick.symbol;
-      const price = parseFloat(data.tick.quote);
-      pushTick(sym, price);
-      if(sym === mainSymbol){
-        if(tracking) trackTicks++;
-        updateMainPanel();
-      }
-      updateScanner();
+      ws.onerror = () => ws.close();
     }
-  };
-}
 
-document.getElementById('symbolSel').addEventListener('change', (e)=>{
-  mainSymbol = e.target.value;
-  if(!SCAN_SYMBOLS.includes(mainSymbol)) subscribe(mainSymbol);
-  document.getElementById('sigLabel').textContent = "WARMING UP…";
-  updateMainPanel();
-});
+    function resetWatchDog() {
+      clearTimeout(watchDogTimeout);
+      watchDogTimeout = setTimeout(() => connectWebSocket(), 5000);
+    }
 
-setInterval(()=>{ if(tracking) updateTracker(); }, 1000);
+    function processSniperLogic() {
+      if (prices.length < 200) return;
 
-connect();
-</script>
+      const currentPrice = prices[prices.length - 1];
+      document.getElementById('price-val').textContent = currentPrice.toFixed(4);
+
+      // 1. Calculate Indicators
+      const ema20 = calculateEMA(prices, 20);
+      const ema50 = calculateEMA(prices, 50);
+      const ema200 = calculateEMA(prices, 200);
+      const rsi = calculateRSI(prices, 14);
+      const atr = calculateATR(prices, 14);
+
+      // 2. Macro Trend Filtering
+      let macroTrend = 'RANGE';
+      const macroEl = document.getElementById('macro-trend');
+
+      if (ema50 > ema200 && currentPrice > ema200) {
+        macroTrend = 'BULLISH';
+        macroEl.textContent = 'BULLISH ▲';
+        macroEl.className = 'diag-val trend-bull';
+      } else if (ema50 < ema200 && currentPrice < ema200) {
+        macroTrend = 'BEARISH';
+        macroEl.textContent = 'BEARISH ▼';
+        macroEl.className = 'diag-val trend-bear';
+      } else {
+        macroEl.textContent = 'SIDEWAYS ◄►';
+        macroEl.className = 'diag-val trend-range';
+      }
+
+      document.getElementById('rsi-val').textContent = rsi.toFixed(1);
+
+      // Distance from Fast EMA (measures pullback proximity)
+      const pullbackDist = Math.abs(currentPrice - ema20);
+      document.getElementById('pullback-val').textContent = pullbackDist.toFixed(2);
+
+      // UI Elements
+      const signalPanel = document.getElementById('signal-panel');
+      const signalTag = document.getElementById('signal-tag');
+      const signalDir = document.getElementById('signal-dir');
+      const signalDesc = document.getElementById('signal-desc');
+
+      const entryEl = document.getElementById('level-entry');
+      const tpEl = document.getElementById('level-tp');
+      const slEl = document.getElementById('level-sl');
+
+      // 3. Sniper Entry Conditions
+      // BULLISH SNIPER: Macro is Bullish AND price pulled back close to EMA20 AND RSI re-expanded from oversold (< 45)
+      const isBuyPullback = currentPrice <= (ema20 + (atr * 0.3)) && currentPrice >= (ema50 - (atr * 0.5));
+      const isBuySniper = macroTrend === 'BULLISH' && isBuyPullback && rsi >= 40 && rsi <= 58;
+
+      // BEARISH SNIPER: Macro is Bearish AND price pulled back up to EMA20 AND RSI re-dropped from overbought (> 55)
+      const isSellPullback = currentPrice >= (ema20 - (atr * 0.3)) && currentPrice <= (ema50 + (atr * 0.5));
+      const isSellSniper = macroTrend === 'BEARISH' && isSellPullback && rsi <= 60 && rsi >= 42;
+
+      if (isBuySniper) {
+        signalPanel.className = 'signal-panel SNIPER_BUY';
+        signalTag.textContent = '🎯 SNIPER BUY ENTRY';
+        signalDir.textContent = 'BUY NOW';
+        signalDesc.textContent = 'Trend pullback complete. Ideal risk/reward entry.';
+
+        const slPrice = currentPrice - (atr * 1.2);
+        const tpPrice = currentPrice + (atr * 2.4); // 1:2 Risk to Reward
+
+        entryEl.textContent = currentPrice.toFixed(4);
+        tpEl.textContent = tpPrice.toFixed(4);
+        slEl.textContent = slPrice.toFixed(4);
+
+      } else if (isSellSniper) {
+        signalPanel.className = 'signal-panel SNIPER_SELL';
+        signalTag.textContent = '🎯 SNIPER SELL ENTRY';
+        signalDir.textContent = 'SELL NOW';
+        signalDesc.textContent = 'Rally pullback complete. Ideal risk/reward entry.';
+
+        const slPrice = currentPrice + (atr * 1.2);
+        const tpPrice = currentPrice - (atr * 2.4); // 1:2 Risk to Reward
+
+        entryEl.textContent = currentPrice.toFixed(4);
+        tpEl.textContent = tpPrice.toFixed(4);
+        slEl.textContent = slPrice.toFixed(4);
+
+      } else {
+        // NO TRADE / WAITING FOR SETUP
+        signalPanel.className = 'signal-panel';
+        signalTag.textContent = 'SCANNING MARKET';
+
+        if (macroTrend === 'BULLISH') {
+          signalDir.textContent = 'WAITING PULLBACK';
+          signalDesc.textContent = 'Uptrend active. Waiting for price to drop to value area.';
+        } else if (macroTrend === 'BEARISH') {
+          signalDir.textContent = 'WAITING PULLBACK';
+          signalDesc.textContent = 'Downtrend active. Waiting for price to bounce to value area.';
+        } else {
+          signalDir.textContent = 'NO TRADE (CHOP)';
+          signalDesc.textContent = 'Market ranging. Avoiding bad entries.';
+        }
+
+        entryEl.textContent = '---';
+        tpEl.textContent = '---';
+        slEl.textContent = '---';
+      }
+    }
+
+    // Exponential Moving Average (EMA)
+    function calculateEMA(data, period) {
+      const k = 2 / (period + 1);
+      let ema = data.slice(0, period).reduce((a, b) => a + b, 0) / period;
+
+      for (let i = period; i < data.length; i++) {
+        ema = (data[i] * k) + (ema * (1 - k));
+      }
+      return ema;
+    }
+
+    // Relative Strength Index (RSI)
+    function calculateRSI(data, period) {
+      let gains = 0;
+      let losses = 0;
+
+      for (let i = data.length - period; i < data.length; i++) {
+        const diff = data[i] - data[i - 1];
+        if (diff >= 0) gains += diff;
+        else losses += Math.abs(diff);
+      }
+
+      const avgGain = gains / period;
+      const avgLoss = losses / period;
+
+      if (avgLoss === 0) return 100;
+      const rs = avgGain / avgLoss;
+      return 100 - (100 / (1 + rs));
+    }
+
+    // Average True Range (ATR)
+    function calculateATR(data, period) {
+      let ranges = [];
+      for (let i = 1; i < data.length; i++) {
+        ranges.push(Math.abs(data[i] - data[i - 1]));
+      }
+      const recent = ranges.slice(-period);
+      return recent.reduce((a, b) => a + b, 0) / period;
+    }
+
+    // Launch Engine
+    connectWebSocket();
+  </script>
 </body>
 </html>
